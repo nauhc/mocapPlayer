@@ -58,12 +58,13 @@ int lastMotion = -1;
 
 char lastMotionFilename[FILENAME_MAX];
 
-const int mlen = 16;// total motion length (clips)
-const int NUM_MOVES = 4; // four kinds of moves: beak(0), wing(1), tail feather(2), claps(3)
-int seq[mlen] = {};
-Motion *motionData[NUM_MOVES]; 
-Motion *motionSeq[mlen];
-//int numFrames[NUM_MOVES];
+const int NUM_MOVE_TYPE = 4; // four kinds of moves_: beak(0), wing(1), tail feather(2), claps(3)
+const int NUM_MOVE_SEQ = 16; // length of motion = 16 moves
+Motion *moves_[NUM_MOVE_TYPE];
+
+int seq[NUM_MOVE_SEQ] = {};
+
+//int numFrames[NUM_MOVE_TYPE];
 const int transFrameNum = 61;
 
 enum SaveScreenToFileMode {
@@ -244,46 +245,7 @@ void Redisplay() {
 	glPopMatrix(); // restore current transformation matrix
 }
 
-void renderWorldAxes_callback(Fl_Light_Button *obj, long val) {
-	renderWorldAxes = (SwitchStatus)worldAxes_button->value();
-	glwindow->redraw();
-}
 
-void renderGroundPlane_callback(Fl_Light_Button *obj, long val) {
-	groundPlane = (SwitchStatus)groundPlane_button->value();
-	glwindow->redraw();
-}
-
-void useFog_callback(Fl_Light_Button *obj, long val) {
-	useFog  = (SwitchStatus)fog_button->value();
-	glwindow->redraw();
-}
-
-void resetScene_callback(Fl_Button *button, void *) {
-	rewindButton = ON;
-	playButton = OFF;
-	repeatButton = OFF;
-	lastSkeleton = -1;
-	lastMotion = -1;
-	displayer.Reset();   
-	maxFrames = 0;
-	glwindow->redraw();
-	framesIncrementDoublePrecision = 1.0;
-	currentFrameIndex = 0;
-	currentFrameIndexDoublePrecision = 0.0;
-}
-
-void saveScreenshot(int windowWidth, int windowHeight, char * filename);
-
-void saveScreenToFile_callback(Fl_Button *button, void *) {
-	if (button == screenShot_button) {
-		CreateScreenFilename(SAVE_ONCE, saveScreenToFileOnceCount, saveScreenToFileOnceFilename);
-		saveScreenshot(640, 480, saveScreenToFileOnceFilename);
-		printf("%s is saved to disk.\n", saveScreenToFileOnceFilename);
-		saveScreenToFileOnceCount++;
-		saveScreenToFile = SAVE_DISABLED;
-	}
-}
 
 void resetPostureAccordingFrameSlider(void) {
 	currentFrameIndex = (int)frame_slider->value() - 1;
@@ -368,82 +330,69 @@ void load_callback(Fl_Button *button, void *) {
 			printf("load skeleton first"); return;
 		}
 
-		Skeleton *pSkeleton = displayer.GetSkeleton(0);
-
 		if (lastSkeleton >= 0 && lastSkeleton >= lastMotion) {
-			string path = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\A_";
-			string ext	= ".amc";
-			Posture *prePost[NUM_MOVES], *postPost[NUM_MOVES];
-			for (int i = 0; i < NUM_MOVES; i++) {
-				//get four move motions from input files
+			// template skeleton used for creating moves
+			Skeleton *templateSkeleton = displayer.GetSkeleton(0);
+
+			// 1st and last posture of 1234
+			Posture *prePost[NUM_MOVE_TYPE], *postPost[NUM_MOVE_TYPE];
+
+			for (int i = 0; i < NUM_MOVE_TYPE; i++) {
+				// get four move motions from input files
+				string path = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\A_";
+				string ext	= ".amc";
 				string fullpath = path + to_string(i) + ext;
-				char * filename = new char[fullpath.length()+1];
+				char *filename = new char[fullpath.length()+1];
 				strcpy(filename, fullpath.c_str());
-				motionData[i] = new Motion(filename, MOCAP_SCALE, pSkeleton);
+				moves_[i] = new Motion(filename, MOCAP_SCALE, templateSkeleton);
+
 				//get the first and last posture
-				prePost[i] = motionData[i]->GetPosture(0);
-				postPost[i] = motionData[i]->GetPosture(motionData[i]->GetNumFrames()-1);
+				prePost[i] = moves_[i]->GetPosture(0);
+				postPost[i] = moves_[i]->GetPosture(moves_[i]->GetNumFrames()-1);
 			}
 
-			//total input motion frame number
+			// total input motion frame number
 			int numFrames = 0;
-			for (int i = 0; i < mlen; i++) {
-				numFrames += motionData[seq[i]]->GetNumFrames();
+			for (int i = 0; i < NUM_MOVE_SEQ; i++) {
+				numFrames += moves_[seq[i]]->GetNumFrames();
 			}
-			numFrames += (mlen - 1) * transFrameNum;
+			numFrames += (NUM_MOVE_SEQ - 1) * transFrameNum;
 
-			//create input motion
-			Motion * motionA = new Motion(numFrames, pSkeleton);
-			Motion * motionTmp = new Motion(transFrameNum, pSkeleton);
-			//load midPost for smoothing
-			char * filename_m = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\posture.amc";
-			Motion *midMotion = new Motion(filename_m, MOCAP_SCALE, pSkeleton);
-			//cout << "number of frames:" << midMotion->GetNumFrames() << endl;
+			// create input motion
+			Motion *motionA = new Motion(numFrames, templateSkeleton);  // smoothed
+			Motion *motionTmp = new Motion(transFrameNum, templateSkeleton);
+			Motion *motionSeq[NUM_MOVE_SEQ];
+
+			// load midPost for smoothing
+			char *filename_m = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\posture.amc";
+			Motion *midMotion = new Motion(filename_m, MOCAP_SCALE, templateSkeleton);
 			Posture midPost = *(midMotion->GetPosture(0));
 
 			int index = 0;
-			for (int i = 0; i < mlen; i++) {
-				motionSeq[i] = motionData[seq[i]];
-				for (int j = 0; j < motionData[seq[i]]->GetNumFrames(); j++) {
-					motionA->SetPosture(index, *(motionSeq[i]->GetPosture(j)));
-					index++;
+			for (int i = 0; i < NUM_MOVE_SEQ; i++) {
+				motionSeq[i] = moves_[seq[i]];
+				for (int j = 0; j < moves_[seq[i]]->GetNumFrames(); j++) {
+					motionA->SetPosture(index++, *(motionSeq[i]->GetPosture(j)));
 				}
-				//cout << motionData[seq[i]]->GetNumFrames() << endl;
-				if (i == mlen - 1) {
+				if (i == NUM_MOVE_SEQ - 1) {
 					continue;
 				} else {
 					motionTmp = posture_transition(
-						*(postPost[seq[i]]), *(prePost[seq[i+1]]), midPost, pSkeleton);
+						*(postPost[seq[i]]), *(prePost[seq[i+1]]), midPost, templateSkeleton);
 					for (int j = 0; j < transFrameNum; j++) { 
-						motionA->SetPosture(index,*( motionTmp->GetPosture(j)));
-						index++;
+						motionA->SetPosture(index++,*( motionTmp->GetPosture(j)));
 					}
-					//cout << motionTmp->GetNumFrames() << endl;
 				}
 			}
-			//delete prePost;
-			//delete postPost;
-			//cout << "total frame number: " << numFrames << endl;
 
-			//char * filename = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\20_01_A.amc";
-			char * filename_prime = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\21_01_B.amc";
+			// Skeleton A, turn around, face to Skeleton B
+			displayer.GetSkeleton(0)->SetRotationAngleY(180.0);
+			displayer.GetSkeleton(0)->SetTranslationZ(15.0);
+			displayer.GetSkeleton(0)->SetTranslationX(40.0);
 
-			Skeleton *pSkeleton = displayer.GetSkeleton(0);
-			Skeleton *pSkeleton1 = displayer.GetSkeleton(1);
+			displayer.GetSkeleton(1)->SetTranslationZ(10.0);
+			displayer.GetSkeleton(1)->SetTranslationX(25.0);
 
-			pSkeleton->SetRotationAngleY(180.0);
-			pSkeleton->SetTranslationZ(15.0);
-			pSkeleton->SetTranslationX(40.0);
-			//pMotion = new Motion(filename, MOCAP_SCALE, pSkeleton); //A-purple
-
-			pSkeleton1->SetTranslationZ(10.0);
-			pSkeleton1->SetTranslationX(25.0);
-			//pMotion1 = new Motion(filename_prime, MOCAP_SCALE, pSkeleton1); //B-greenblue
-
-			// backup the filename
-			//strcpy(lastMotionFilename, filename);
-
-			// set sampled motion for displayer
 			// chuan
 			displayer.LoadMotion(motionA);  
 			displayer.LoadMotion(motionA);     
@@ -453,67 +402,21 @@ void load_callback(Fl_Button *button, void *) {
 			}
 
 			UpdateMaxFrameNumber();
-			resetPostureAccordingFrameSlider();
+
+			resetPostureAccordingFrameSlider();	 // key
+
 			frame_slider->value(currentFrameIndex);
 			frame_slider->maximum((double)maxFrames);
 			frame_slider->redraw(); 
 			glwindow->redraw();
 			Fl::flush();
-		} // if (lastSkeleton > lastMotion)
-	} // if (button == loadMotion_button)
-
-	glwindow->redraw();
-}
-
-void reload_callback(Fl_Button *button, void *) {
-	if (!displayer.GetNumSkeletons() != 0) {
-		return;
-	}
-
-	// Read motion (.amc) file and create a motion
-	//pMotion = new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton);
-	//pMotion1 = new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton1);
-	// Set sampled motion for display
-	Skeleton *pSkeletonA = displayer.GetSkeleton(0);
-	Skeleton *pSkeletonB = displayer.GetSkeleton(1);
-
-	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeletonA));   
-	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeletonB));
-
-	resetPostureAccordingFrameSlider();
-	UpdateMaxFrameNumber();
-	frame_slider->maximum((double)maxFrames);
-	frame_slider->value(currentFrameIndex);
-	frame_slider->redraw();
-	Fl::flush();
-	glwindow->redraw();
-}
-
-void play_callback(Fl_Button * button, void *) {
-	if (button == play_button)     { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = ON;  rewindButton = OFF; }
-	if (button == minusOne_button) { minusOneButton = ON;  plusOneButton = OFF; rewindButton = OFF; playButton = OFF; repeatButton = OFF; }
-	if (button == plusOne_button)  { minusOneButton = OFF; plusOneButton = ON;  rewindButton = OFF; playButton = OFF; repeatButton = OFF; }
-	if (button == pause_button)    { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = OFF; repeatButton = OFF; } 
-	if (button == repeat_button)   { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = ON;  repeatButton = ON;  }
-	if (button == rewind_button)   { minusOneButton = OFF; plusOneButton = OFF; rewindButton = ON;  playButton = OFF; repeatButton = OFF; }
-	if ((previousPlayButtonStatus == OFF) && (playButton == ON)) {
-		framesIncrementDoublePrecision = 1.0;  // Just start playing the animation, no time has been measured
-	}
-	if (button == pause_button) {
-		if (saveScreenToFile == SAVE_CONTINUOUS) {
-			saveScreenToFile = SAVE_DISABLED;
 		}
 	}
-}
 
-void record_callback(Fl_Light_Button * button, void * ) {
-	if ((SwitchStatus)(record_button->value()) == OFF) {
-		saveScreenToFile = SAVE_DISABLED;
-	} else {
-		saveScreenToFile = SAVE_CONTINUOUS;
-	}
 	glwindow->redraw();
 }
+
+
 
 /*
 Set all skeletons to a specified frame (frameIndex). If frameIndex is larger than the number of frames of the motion, 
@@ -688,6 +591,98 @@ void idle(void*) {
 	glwindow->redraw();
 }
 
+#pragma region callbacks
+
+void reload_callback(Fl_Button *button, void *) {
+	if (!displayer.GetNumSkeletons() != 0) {
+		return;
+	}
+
+	// Read motion (.amc) file and create a motion
+	//pMotion = new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton);
+	//pMotion1 = new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton1);
+	// Set sampled motion for display
+	Skeleton *pSkeletonA = displayer.GetSkeleton(0);
+	Skeleton *pSkeletonB = displayer.GetSkeleton(1);
+
+	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeletonA));   
+	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeletonB));
+
+	resetPostureAccordingFrameSlider();
+	UpdateMaxFrameNumber();
+	frame_slider->maximum((double)maxFrames);
+	frame_slider->value(currentFrameIndex);
+	frame_slider->redraw();
+	Fl::flush();
+	glwindow->redraw();
+}
+
+void play_callback(Fl_Button * button, void *) {
+	if (button == play_button)     { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = ON;  rewindButton = OFF; }
+	if (button == minusOne_button) { minusOneButton = ON;  plusOneButton = OFF; rewindButton = OFF; playButton = OFF; repeatButton = OFF; }
+	if (button == plusOne_button)  { minusOneButton = OFF; plusOneButton = ON;  rewindButton = OFF; playButton = OFF; repeatButton = OFF; }
+	if (button == pause_button)    { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = OFF; repeatButton = OFF; } 
+	if (button == repeat_button)   { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = ON;  repeatButton = ON;  }
+	if (button == rewind_button)   { minusOneButton = OFF; plusOneButton = OFF; rewindButton = ON;  playButton = OFF; repeatButton = OFF; }
+	if ((previousPlayButtonStatus == OFF) && (playButton == ON)) {
+		framesIncrementDoublePrecision = 1.0;  // Just start playing the animation, no time has been measured
+	}
+	if (button == pause_button) {
+		if (saveScreenToFile == SAVE_CONTINUOUS) {
+			saveScreenToFile = SAVE_DISABLED;
+		}
+	}
+}
+
+void record_callback(Fl_Light_Button * button, void * ) {
+	if ((SwitchStatus)(record_button->value()) == OFF) {
+		saveScreenToFile = SAVE_DISABLED;
+	} else {
+		saveScreenToFile = SAVE_CONTINUOUS;
+	}
+	glwindow->redraw();
+}
+
+void renderWorldAxes_callback(Fl_Light_Button *obj, long val) {
+	renderWorldAxes = (SwitchStatus)worldAxes_button->value();
+	glwindow->redraw();
+}
+
+void renderGroundPlane_callback(Fl_Light_Button *obj, long val) {
+	groundPlane = (SwitchStatus)groundPlane_button->value();
+	glwindow->redraw();
+}
+
+void useFog_callback(Fl_Light_Button *obj, long val) {
+	useFog  = (SwitchStatus)fog_button->value();
+	glwindow->redraw();
+}
+
+void resetScene_callback(Fl_Button *button, void *) {
+	rewindButton = ON;
+	playButton = OFF;
+	repeatButton = OFF;
+	lastSkeleton = -1;
+	lastMotion = -1;
+	displayer.Reset();   
+	maxFrames = 0;
+	glwindow->redraw();
+	framesIncrementDoublePrecision = 1.0;
+	currentFrameIndex = 0;
+	currentFrameIndexDoublePrecision = 0.0;
+}
+
+void saveScreenshot(int windowWidth, int windowHeight, char * filename);
+void saveScreenToFile_callback(Fl_Button *button, void *) {
+	if (button == screenShot_button) {
+		CreateScreenFilename(SAVE_ONCE, saveScreenToFileOnceCount, saveScreenToFileOnceFilename);
+		saveScreenshot(640, 480, saveScreenToFileOnceFilename);
+		printf("%s is saved to disk.\n", saveScreenToFileOnceFilename);
+		saveScreenToFileOnceCount++;
+		saveScreenToFile = SAVE_DISABLED;
+	}
+}
+
 void fslider_callback(Fl_Value_Slider *slider, long val) {
 	currentFrameIndex = (int) frame_slider->value() - 1;
 	currentFrameIndexDoublePrecision = currentFrameIndex;
@@ -701,7 +696,6 @@ void fslider_callback(Fl_Value_Slider *slider, long val) {
 }
 
 void playSpeed_callback(Fl_Value_Input *obj, void *) {
-	//framesIncrementDoublePrecision = speedUp->value();
 	double speedRatio = speedUp->value();
 	expectedFPS = standardFPS * speedRatio;
 	glwindow->redraw();
@@ -792,6 +786,8 @@ void aboutPlayer_callback(Fl_Button * button, void *) {
 	fl_message_title("About ASF/AMC Motion Capture Player");
 	fl_message("ASF/AMC Motion Capture Player.\n\nVersion 1.0: Steve Lin, Alla Safonova, Kiran Bhat\nCarnegie Mellon University, 2002\n\nVersion 2.0: Yili Zhao, Jernej Barbic\nUniversity of Southern California, 2012\n");
 }
+
+#pragma endregion
 
 void GraphicsInit() {
 	int red_bits, green_bits, blue_bits;
@@ -931,8 +927,7 @@ int Player_Gl_Window::handle(int event) {
 		}
 		break;
 	case FL_KEYBOARD:
-		switch (Fl::event_key()) 
-		{
+		switch (Fl::event_key()) {
 		case 'q':
 		case 'Q':
 		case 65307:
@@ -963,18 +958,13 @@ void Player_Gl_Window::draw() {
 }
 
 int main(int argc, char **argv)  {
-	//random motion clip sequence
-	//const int len = 16;
-	//int seq[len] = {};
-	for (int i = 0; i < mlen; i++) {
-		seq[i] = rand() % NUM_MOVES;
+	for (int i = 0; i < NUM_MOVE_SEQ; i++) {
+		seq[i] = rand() % NUM_MOVE_TYPE;
 		cout << seq[i];
 	}
 
 	// Initialize form, sliders and buttons
 	form = make_window();
-	//load_auto();
-	//load asf and amc here.*****
 
 	performanceCounter.StartCounter();  // init
 	saveFileTimeCounter.StartCounter(); // init
@@ -983,10 +973,11 @@ int main(int argc, char **argv)  {
 	fog_button->value(useFog);
 	worldAxes_button->value(renderWorldAxes);
 	frame_slider->value(1);
-	if (saveScreenToFile == SAVE_CONTINUOUS)
+	if (saveScreenToFile == SAVE_CONTINUOUS) {
 		record_button->value(1);  // ON
-	else
+	} else {
 		record_button->value(0);  // OFF
+	}
 
 	// just do some timing, no special purpose
 	// because the first data is always not trustable according to experience
@@ -1041,15 +1032,17 @@ int main(int argc, char **argv)  {
 		} else {
 			printf("Load a skeleton first.\n");
 		}
+
 		framesIncrementDoublePrecision = 1.0;            // Current frame and frame increment
 		playButton = ON;
 		repeatButton = OFF;
 		groundPlane = ON; 
 		glwindow->redraw();
 	}  // if (argc > 2)
+
 	Fl::add_idle(idle);
-	//load_auto();
 	Fl::run();
+
 	return 0;
 }
 

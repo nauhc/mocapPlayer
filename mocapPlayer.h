@@ -27,7 +27,7 @@ public:
   /* This is an overloading of a Window call.  It is 
   called whenever a event happens inside the space 
   taken up by the Anim_Gl_Window. */		
-  int handle(int event); 
+  int handle(int event);
 };
 
 

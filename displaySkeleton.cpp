@@ -392,12 +392,19 @@ void DisplaySkeleton::Render(RenderMode renderMode_)
   glPopMatrix();
 }
 
+//void DisplaySkeleton::LoadMotion(Motion * pMotion)
+//{
+//  // always load the motion for the latest skeleton
+//  if(m_pMotion[numSkeletons - 1] != NULL) 
+//    delete m_pMotion[numSkeletons - 1];
+//  m_pMotion[numSkeletons - 1] = pMotion;
+//}
 void DisplaySkeleton::LoadMotion(Motion * pMotion)
 {
-  // always load the motion for the latest skeleton
-  if(m_pMotion[numSkeletons - 1] != NULL) 
-    delete m_pMotion[numSkeletons - 1];
-  m_pMotion[numSkeletons - 1] = pMotion;
+	if (numMotions >= MAX_SKELS) 
+		return;
+	m_pMotion[numMotions] = pMotion;
+	numMotions++;
 }
 
 //Set skeleton for display

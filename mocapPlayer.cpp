@@ -243,16 +243,16 @@ void Redisplay()
 		double ground[4] = {0,1,0,0}; //don't change
 		double light[4] = {0,groundPlaneLightHeight,0,1};
 		displayer.RenderShadow(ground, light);
-		displayer1.RenderShadow(ground, light);
+		//displayer1.RenderShadow(ground, light);
 	}
 
 	// render the skeletons
-	if (displayer.GetNumSkeletons() && displayer1.GetNumSkeletons()) 
+	if (displayer.GetNumSkeletons() /*&& displayer1.GetNumSkeletons()*/) 
 	{
 		glEnable(GL_LIGHTING);
 		glDisable(GL_FOG);
 		displayer.Render(DisplaySkeleton::BONES_AND_LOCAL_FRAMES);
-		displayer1.Render(DisplaySkeleton::BONES_AND_LOCAL_FRAMES);
+		//displayer1.Render(DisplaySkeleton::BONES_AND_LOCAL_FRAMES);
 	}
 
 	glPopMatrix(); // restore current transformation matrix
@@ -283,7 +283,8 @@ void resetScene_callback(Fl_Button *button, void *)
 	repeatButton = OFF;
 	lastSkeleton = -1;
 	lastMotion = -1;
-	displayer.Reset();   displayer1.Reset(); 
+	displayer.Reset();   
+	//displayer1.Reset(); 
 	maxFrames = 0;
 	glwindow->redraw();
 	framesIncrementDoublePrecision = 1.0;
@@ -324,17 +325,17 @@ void resetPostureAccordingFrameSlider(void)
 	}
 
 	// display
-	for (int skeletonIndex = 0; skeletonIndex < displayer1.GetNumSkeletons(); skeletonIndex++)
-	{
-		int postureID;
-		if (currentFrameIndex >= displayer1.GetSkeletonMotion(skeletonIndex)->GetNumFrames())
-			postureID = displayer1.GetSkeletonMotion(skeletonIndex)->GetNumFrames() - 1;
-		else
-			postureID = currentFrameIndex;
-		// Set skeleton to the first posture
-		Posture * currentPosture = displayer1.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID);
-		displayer1.GetSkeleton(skeletonIndex)->setPosture(*currentPosture);
-	}
+	//for (int skeletonIndex = 0; skeletonIndex < displayer1.GetNumSkeletons(); skeletonIndex++)
+	//{
+	//	int postureID;
+	//	if (currentFrameIndex >= displayer1.GetSkeletonMotion(skeletonIndex)->GetNumFrames())
+	//		postureID = displayer1.GetSkeletonMotion(skeletonIndex)->GetNumFrames() - 1;
+	//	else
+	//		postureID = currentFrameIndex;
+	//	// Set skeleton to the first posture
+	//	Posture * currentPosture = displayer1.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID);
+	//	displayer1.GetSkeleton(skeletonIndex)->setPosture(*currentPosture);
+	//}
 
 }
 
@@ -343,17 +344,18 @@ void UpdateMaxFrameNumber(void)
 	maxFrames = 0;
 	for(int skeletonIndex = 0; skeletonIndex < displayer.GetNumSkeletons(); skeletonIndex++)
 	{
-		int currentFrames = displayer.GetSkeletonMotion(skeletonIndex)->GetNumFrames();
+		Motion *pM = displayer.GetSkeletonMotion(skeletonIndex);
+		int currentFrames = pM->GetNumFrames();
 		if (currentFrames > maxFrames)
 			maxFrames = currentFrames;
 	}
 
-	for(int skeletonIndex = 0; skeletonIndex < displayer1.GetNumSkeletons(); skeletonIndex++)
+	/*for(int skeletonIndex = 0; skeletonIndex < displayer1.GetNumSkeletons(); skeletonIndex++)
 	{
 		int currentFrames = displayer1.GetSkeletonMotion(skeletonIndex)->GetNumFrames();
 		if (currentFrames > maxFrames)
 			maxFrames = currentFrames;
-	}
+	}*/
 
 }
 
@@ -425,7 +427,8 @@ void load_callback(Fl_Button *button, void *)
 				float boneColor[3] = {1.0f, 0.5f, 1.0f}; // A-purple
 				float boneColor1[3] = {0.5f, 1.0f, 1.0f};// B-greenblue
 				displayer.LoadSkeleton(pSkeleton, boneColor);
-				displayer1.LoadSkeleton(pSkeleton1, boneColor1);
+				//displayer1.LoadSkeleton(pSkeleton1, boneColor1);
+				displayer.LoadSkeleton(pSkeleton1, boneColor1);
 				glwindow->redraw();
 			}
 		}
@@ -522,7 +525,7 @@ void load_callback(Fl_Button *button, void *)
 					//displayer.LoadMotion(pMotion);  
 					// chuan
 					displayer.LoadMotion(motionA);  
-					displayer1.LoadMotion(pMotion1);      
+					displayer.LoadMotion(pMotion1);     
 
 					if (lastSkeleton > lastMotion)         
 						lastMotion++;
@@ -554,7 +557,7 @@ void load_auto(){
 		float boneColor[3] = {1.0f, 0.5f, 1.0f};
 		float boneColor1[3] = {0.5f, 1.0f, 1.0f};
 		displayer.LoadSkeleton(pSkeleton, boneColor);
-		displayer1.LoadSkeleton(pSkeleton1, boneColor1);
+		displayer.LoadSkeleton(pSkeleton1, boneColor1);
 		//glwindow->redraw();
 	}
 
@@ -578,7 +581,7 @@ void load_auto(){
 
 			// set sampled motion for display
 			displayer.LoadMotion(pMotion);  
-			displayer1.LoadMotion(pMotion1);      
+			displayer.LoadMotion(pMotion);      
 
 			if (lastSkeleton > lastMotion)         
 				lastMotion++;
@@ -599,7 +602,7 @@ void load_auto(){
 
 void reload_callback(Fl_Button *button, void *) 
 {
-	if (!displayer.GetNumSkeletons() || !displayer1.GetNumSkeletons())
+	if (!displayer.GetNumSkeletons() /*|| !displayer1.GetNumSkeletons()*/)
 		return;
 
 	// Read motion (.amc) file and create a motion
@@ -607,7 +610,7 @@ void reload_callback(Fl_Button *button, void *)
 	pMotion1 = new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton1);
 	// Set sampled motion for display
 	displayer.LoadMotion(pMotion);   
-	displayer1.LoadMotion(pMotion1);
+	displayer.LoadMotion(pMotion1);
 
 	resetPostureAccordingFrameSlider();
 	UpdateMaxFrameNumber();
@@ -655,8 +658,8 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex)
 		printf("Error in SetSkeletonsToSpecifiedFrame: frameIndex %d is illegal.\n", frameIndex);
 		exit(0);
 	}
-
-	for (int skeletonIndex = 0; skeletonIndex < displayer.GetNumSkeletons(); skeletonIndex++){
+	
+	/*for (int skeletonIndex = 0; skeletonIndex < displayer.GetNumSkeletons(); skeletonIndex++){
 
 		if (displayer.GetSkeletonMotion(skeletonIndex) != NULL
 			&& displayer1.GetSkeletonMotion(skeletonIndex) != NULL)
@@ -674,6 +677,27 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex)
 			displayer.GetSkeleton(skeletonIndex)->setPosture(
 				*(displayer.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID)));
 		}
+	}*/
+
+	if (displayer.GetNumSkeletons() != 2){
+		printf("Skeleton number not match");
+		exit(0);
+	}
+	if ( displayer.GetSkeletonMotion(0) != NULL &&
+		displayer.GetSkeletonMotion(1) != NULL){
+
+			int postureID;
+			if (frameIndex >= displayer.GetSkeletonMotion(0)->GetNumFrames())
+				postureID = displayer.GetSkeletonMotion(0)->GetNumFrames() - 1;
+			else 
+				postureID = frameIndex;
+			int postureID1 = postureID - 50;
+			if (postureID1 < 0) postureID1 = 0;
+			displayer.GetSkeleton(1)->setPosture(
+				*(displayer.GetSkeletonMotion(0)->GetPosture(postureID1)));
+
+			displayer.GetSkeleton(0)->setPosture(
+				*(displayer.GetSkeletonMotion(0)->GetPosture(postureID)));
 	}
 		/*for (int skeletonIndex = 0; skeletonIndex < displayer1.GetNumSkeletons(); skeletonIndex++)
 			if (displayer1.GetSkeletonMotion(skeletonIndex) != NULL)
@@ -743,14 +767,14 @@ void idle(void*)
 				displayer.GetSkeleton(i)->setPosture(*initSkeleton);
 			}
 		}
-		for (int i = 0; i < displayer1.GetNumSkeletons(); i++)
+		/*for (int i = 0; i < displayer1.GetNumSkeletons(); i++)
 		{
 			if (displayer1.GetSkeletonMotion(i) != NULL)
 			{
 				Posture * initSkeleton = displayer1.GetSkeletonMotion(i)->GetPosture(0);
 				displayer1.GetSkeleton(i)->setPosture(*initSkeleton);
 			}
-		}
+		}*/
 		rewindButton = OFF;
 	}
 
@@ -878,7 +902,7 @@ void playSpeed_callback(Fl_Value_Input *obj, void *)
 void spotJoint_callback(Fl_Value_Input *obj, void *)
 {
 	displayer.SetDisplayedSpotJoint((int) joint_idx->value());
-	displayer1.SetDisplayedSpotJoint((int) joint_idx->value());
+	//displayer1.SetDisplayedSpotJoint((int) joint_idx->value());
 	glwindow->redraw();
 }
 
@@ -898,19 +922,19 @@ void skeletonID_callback(Fl_Value_Input *obj, void*)
 			sub_input->value(displayer.GetNumSkeletons() - 1);
 			subnum = displayer.GetNumSkeletons() - 1;
 		}
-		if (subnum >= displayer1.GetNumSkeletons())
+		/*if (subnum >= displayer1.GetNumSkeletons())
 		{
 			sub_input->value(displayer1.GetNumSkeletons() - 1);
 			subnum = displayer1.GetNumSkeletons() - 1;
-		}
+		}*/
 
 		// Change values of other inputs to match sub-number
 		double translation[3];
 		displayer.GetSkeleton(subnum)->GetTranslation(translation);
-		displayer1.GetSkeleton(subnum)->GetTranslation(translation);
+		//displayer1.GetSkeleton(subnum)->GetTranslation(translation);
 		double rotationAngle[3];
 		displayer.GetSkeleton(subnum)->GetRotationAngle(rotationAngle);
-		displayer1.GetSkeleton(subnum)->GetRotationAngle(rotationAngle);
+		//displayer1.GetSkeleton(subnum)->GetRotationAngle(rotationAngle);
 		tx_input->value(translation[0]);
 		ty_input->value(translation[1]);
 		tz_input->value(translation[2]);
@@ -927,8 +951,8 @@ void tx_callback(Fl_Value_Input *obj, void*)
 	subnum = (int)sub_input->value();
 	if (subnum < displayer.GetNumSkeletons() && subnum >= 0)
 		displayer.GetSkeleton(subnum)->SetTranslationX(tx_input->value());
-	if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
-		displayer1.GetSkeleton(subnum)->SetTranslationX(tx_input->value());
+	/*if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
+		displayer1.GetSkeleton(subnum)->SetTranslationX(tx_input->value());*/
 	glwindow->redraw();
 }
 
@@ -939,8 +963,8 @@ void ty_callback(Fl_Value_Input *obj, void*)
 
 	if (subnum < displayer.GetNumSkeletons() && subnum >= 0)
 		displayer.GetSkeleton(subnum)->SetTranslationY(ty_input->value());
-	if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
-		displayer1.GetSkeleton(subnum)->SetTranslationY(ty_input->value());
+	/*if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
+		displayer1.GetSkeleton(subnum)->SetTranslationY(ty_input->value());*/
 
 	glwindow->redraw();
 }
@@ -952,8 +976,8 @@ void tz_callback(Fl_Value_Input *obj, void*)
 
 	if (subnum < displayer.GetNumSkeletons() && subnum >= 0)
 		displayer.GetSkeleton(subnum)->SetTranslationZ(tz_input->value());
-	if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
-		displayer1.GetSkeleton(subnum)->SetTranslationZ(tz_input->value());
+	/*if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
+		displayer1.GetSkeleton(subnum)->SetTranslationZ(tz_input->value());*/
 
 	glwindow->redraw();
 }
@@ -964,8 +988,8 @@ void rx_callback(Fl_Value_Input *obj, void*)
 	subnum = (int)sub_input->value();
 	if (subnum < displayer.GetNumSkeletons() && subnum >= 0)
 		displayer.GetSkeleton(subnum)->SetRotationAngleX(rx_input->value());
-	if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
-		displayer1.GetSkeleton(subnum)->SetRotationAngleX(rx_input->value());
+	/*if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
+		displayer1.GetSkeleton(subnum)->SetRotationAngleX(rx_input->value());*/
 	glwindow->redraw();
 }
 
@@ -975,8 +999,8 @@ void ry_callback(Fl_Value_Input *obj, void*)
 	subnum = (int)sub_input->value();
 	if (subnum < displayer.GetNumSkeletons() && subnum >= 0)
 		displayer.GetSkeleton(subnum)->SetRotationAngleY(ry_input->value());
-	if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
-		displayer1.GetSkeleton(subnum)->SetRotationAngleY(ry_input->value());
+	/*if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
+		displayer1.GetSkeleton(subnum)->SetRotationAngleY(ry_input->value());*/
 	glwindow->redraw();
 }
 
@@ -986,8 +1010,8 @@ void rz_callback(Fl_Value_Input *obj, void*)
 	subnum = (int)sub_input->value();
 	if (subnum < displayer.GetNumSkeletons() && subnum >= 0)
 		displayer.GetSkeleton(subnum)->SetRotationAngleZ(rz_input->value());
-	if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
-		displayer1.GetSkeleton(subnum)->SetRotationAngleZ(rz_input->value());
+	/*if (subnum < displayer1.GetNumSkeletons() && subnum >= 0)
+		displayer1.GetSkeleton(subnum)->SetRotationAngleZ(rz_input->value());*/
 	glwindow->redraw();
 }
 
@@ -1310,7 +1334,7 @@ int main(int argc, char **argv)
 			lastSkeleton++;
 		}
 
-		if (displayer.GetNumSkeletons() && displayer1.GetNumSkeletons())
+		if (displayer.GetNumSkeletons() /*&& displayer1.GetNumSkeletons()*/)
 		{
 			filename = argv[2];
 			if(filename != NULL)

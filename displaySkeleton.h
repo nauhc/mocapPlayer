@@ -66,6 +66,7 @@ protected:
 
   int m_SpotJoint;		//joint whose local coordinate framework is drawn
   int numSkeletons;
+  int numMotions;
   Skeleton *m_pSkeleton[MAX_SKELS];		//pointer to current skeleton
   Motion *m_pMotion[MAX_SKELS];		//pointer to current motion	
   GLuint m_BoneList[MAX_SKELS];		//display list with bones

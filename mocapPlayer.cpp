@@ -39,8 +39,8 @@ enum SwitchStatus {OFF, ON};
 
 DisplaySkeleton displayer;		
 
-Skeleton *pSkeleton = NULL;	// Skeleton info as read from ASF file
-Skeleton *pSkeleton1 = NULL;	// Skeleton info as read from ASF file
+//Skeleton *pSkeleton = NULL;	// Skeleton info as read from ASF file
+//Skeleton *pSkeleton1 = NULL;	// Skeleton info as read from ASF file
 Motion *pMotion = NULL;     // Motion information as read from AMC file
 Motion *pMotion1 = NULL;     // Motion information as read from AMC file
 
@@ -64,11 +64,11 @@ int lastMotion = -1;
 char lastMotionFilename[FILENAME_MAX];
 
 const int mlen = 16;// total motion length (clips)
-const int mvs = 4; // four kinds of moves: beak(0), wing(1), tail feather(2), claps(3)
+const int NUM_MOVES = 4; // four kinds of moves: beak(0), wing(1), tail feather(2), claps(3)
 int seq[mlen] = {};
-Motion *motionData[mvs]; 
+Motion *motionData[NUM_MOVES]; 
 Motion *motionSeq[mlen];
-//int numFrames[mvs];
+//int numFrames[NUM_MOVES];
 const int transFrameNum = 61;
 
 enum SaveScreenToFileMode {
@@ -76,8 +76,8 @@ enum SaveScreenToFileMode {
 };
 
 int saveScreenToFileOnceCount = 0;
-char saveScreenToFileOnceFilename[FILENAME_MAX];
 int saveScreenToFileContinuousCount = 0;
+char saveScreenToFileOnceFilename[FILENAME_MAX];
 char saveScreenToFileContinuousFilename[FILENAME_MAX];
 SaveScreenToFileMode saveScreenToFile = SAVE_DISABLED;
 
@@ -297,12 +297,13 @@ void resetPostureAccordingFrameSlider(void) {
 	// display
 	for (int skeletonIndex = 0; skeletonIndex < displayer.GetNumSkeletons(); skeletonIndex++) {
 		int postureID;
-		if (currentFrameIndex >= displayer.GetSkeletonMotion(skeletonIndex)->GetNumFrames())
+		if (currentFrameIndex >= displayer.GetSkeletonMotion(skeletonIndex)->GetNumFrames()) {
 			postureID = displayer.GetSkeletonMotion(skeletonIndex)->GetNumFrames() - 1;
-		else
+		} else {
 			postureID = currentFrameIndex;
+		}
 		// Set skeleton to the first posture
-		Posture * currentPosture = displayer.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID);
+		Posture *currentPosture = displayer.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID);
 		displayer.GetSkeleton(skeletonIndex)->setPosture(*currentPosture);
 	}
 }
@@ -348,38 +349,42 @@ Motion * posture_transition(Posture prePosture, Posture postPosture, Posture mid
 
 void load_callback(Fl_Button *button, void *) {
 	if (button == loadSkeleton_button) {
-		if (lastSkeleton <= lastMotion) { // cannot load new skeleton until motion is assigned to the current skeleton
-			//char * filename = fl_file_chooser("Select filename","*.ASF","");
-			char * filename = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\dance.asf";
-			if (filename != NULL) {
-				// Read skeleton from asf file
-				pSkeleton = new Skeleton(filename, MOCAP_SCALE);
-				pSkeleton1 = new Skeleton(filename, MOCAP_SCALE);
-				lastSkeleton++;
-				// Set the rotations for all bones in their local coordinate system to 0
-				// Set root position to (0, 0, 0)
-				pSkeleton->setBasePosture();
-				pSkeleton1->setBasePosture();
-				float boneColor[3] = {1.0f, 0.5f, 1.0f}; // A-purple
-				float boneColor1[3] = {0.5f, 1.0f, 1.0f};// B-greenblue
-				displayer.LoadSkeleton(pSkeleton, boneColor);
-				displayer.LoadSkeleton(pSkeleton1, boneColor1);
-				glwindow->redraw();
-			}
+		// cannot load new skeleton until motion is assigned to the current skeleton
+		if (lastSkeleton <= lastMotion) { 
+			char *filename = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\dance.asf";
+			// Read skeleton from asf file
+			Skeleton *pSkeleton = new Skeleton(filename, MOCAP_SCALE);
+			Skeleton *pSkeleton1 = new Skeleton(filename, MOCAP_SCALE);
+			lastSkeleton++;
+			// Set the rotations for all bones in their local coordinate system to 0
+			// Set root position to (0, 0, 0)
+			pSkeleton->setBasePosture();
+			pSkeleton1->setBasePosture();
+			float boneColor[3] = {1.0f, 0.5f, 1.0f}; // A-purple
+			float boneColor1[3] = {0.5f, 1.0f, 1.0f};// B-greenblue
+			displayer.LoadSkeleton(pSkeleton, boneColor);
+			displayer.LoadSkeleton(pSkeleton1, boneColor1);
+			glwindow->redraw();
 		}
 	}
 
 	if (button == loadMotion_button) {
+		if (displayer.GetNumSkeletons() == 0) {
+			printf("load skeleton first"); return;
+		}
+
+		Skeleton *pSkeleton = displayer.GetSkeleton(0);
+
 		if (lastSkeleton >= 0 && lastSkeleton >= lastMotion) {
 			//char * filename = fl_file_chooser("Select one filename","*.AMC","");
 			string path = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\A_";
 			string ext	= ".amc";
-			Posture *prePost[mvs], *postPost[mvs];
-			for (int i = 0; i < mvs; i++) {
+			Posture *prePost[NUM_MOVES], *postPost[NUM_MOVES];
+			for (int i = 0; i < NUM_MOVES; i++) {
 				//get four move motions from input files
-				string total = path + to_string(i) + ext;
-				char * filename = new char[total.length()+1];
-				strcpy(filename, total.c_str());
+				string fullpath = path + to_string(i) + ext;
+				char * filename = new char[fullpath.length()+1];
+				strcpy(filename, fullpath.c_str());
 				motionData[i] = new Motion(filename, MOCAP_SCALE, pSkeleton);
 				//get the first and last posture
 				prePost[i] = motionData[i]->GetPosture(0);
@@ -428,99 +433,43 @@ void load_callback(Fl_Button *button, void *) {
 
 			//char * filename = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\20_01_A.amc";
 			char * filename_prime = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\21_01_B.amc";
-			//if(filename != NULL && filename_prime != NULL)
-			//{
-				// Read motion (.amc) file and create a motion
-				pSkeleton->SetRotationAngleY(180.0);
-				pSkeleton->SetTranslationZ(15.0);
-				pSkeleton->SetTranslationX(40.0);
-				//pMotion = new Motion(filename, MOCAP_SCALE, pSkeleton); //A-purple
 
-				pSkeleton1->SetTranslationZ(10.0);
-				pSkeleton1->SetTranslationX(25.0);
-				pMotion1 = new Motion(filename_prime, MOCAP_SCALE, pSkeleton1); //B-greenblue
+			Skeleton *pSkeleton = displayer.GetSkeleton(0);
+			Skeleton *pSkeleton1 = displayer.GetSkeleton(1);
 
-				// backup the filename
-				//strcpy(lastMotionFilename, filename);
+			pSkeleton->SetRotationAngleY(180.0);
+			pSkeleton->SetTranslationZ(15.0);
+			pSkeleton->SetTranslationX(40.0);
+			//pMotion = new Motion(filename, MOCAP_SCALE, pSkeleton); //A-purple
 
-				// set sampled motion for display
-				//displayer.LoadMotion(pMotion);  
-				// chuan
-				displayer.LoadMotion(motionA);  
-				displayer.LoadMotion(motionA);     
+			pSkeleton1->SetTranslationZ(10.0);
+			pSkeleton1->SetTranslationX(25.0);
+			//pMotion1 = new Motion(filename_prime, MOCAP_SCALE, pSkeleton1); //B-greenblue
 
-				if (lastSkeleton > lastMotion)         
-					lastMotion++;
+			// backup the filename
+			//strcpy(lastMotionFilename, filename);
 
-				UpdateMaxFrameNumber();
-				resetPostureAccordingFrameSlider();
-				frame_slider->value(currentFrameIndex);
-				frame_slider->maximum((double)maxFrames);
-				frame_slider->redraw(); 
-				glwindow->redraw();
-				Fl::flush();
-			//}
+			// set sampled motion for displayer
+			// chuan
+			displayer.LoadMotion(motionA);  
+			displayer.LoadMotion(motionA);     
+
+			if (lastSkeleton > lastMotion) {
+				lastMotion++;
+			}
+
+			UpdateMaxFrameNumber();
+			resetPostureAccordingFrameSlider();
+			frame_slider->value(currentFrameIndex);
+			frame_slider->maximum((double)maxFrames);
+			frame_slider->redraw(); 
+			glwindow->redraw();
+			Fl::flush();
 		} // if (lastSkeleton > lastMotion)
-	}
+	} // if (button == loadMotion_button)
+
 	glwindow->redraw();
 }
-//void load_auto(){
-//	if (lastSkeleton <= lastMotion)  // cannot load new skeleton until motion is assigned to the current skeleton
-//	{
-//		char * asfFilename = "C:\\Users\\Yang\\Desktop\\mocap\\mocapPlayer_source_1\\IDE\\VS2010\\mocapPlayer\\131-dance.asf";
-//		// Read skeleton from asf file
-//		pSkeleton = new Skeleton(asfFilename, MOCAP_SCALE);
-//		pSkeleton1 = new Skeleton(asfFilename, MOCAP_SCALE);
-//		lastSkeleton++;
-//		// Set the rotations for all bones in their local coordinate system to 0
-//		// Set root position to (0, 0, 0)
-//		pSkeleton->setBasePosture();
-//		pSkeleton1->setBasePosture();
-//		float boneColor[3] = {1.0f, 0.5f, 1.0f};
-//		float boneColor1[3] = {0.5f, 1.0f, 1.0f};
-//		displayer.LoadSkeleton(pSkeleton, boneColor);
-//		displayer.LoadSkeleton(pSkeleton1, boneColor1);
-//		//glwindow->redraw();
-//	}
-//
-//	if ((lastSkeleton >= 0) && (lastSkeleton >= lastMotion))
-//	{
-//		char * amcFilename = "C:\\Users\\Yang\\Desktop\\mocap\\mocapPlayer_source_1\\IDE\\VS2010\\mocapPlayer\\20_01_A.amc";
-//		if(amcFilename != NULL)
-//		{
-//			// Read motion (.amc) file and create a motion
-//			pSkeleton->SetRotationAngleY(180.0);
-//			pSkeleton->SetTranslationZ(-20.0);
-//			pMotion = new Motion(amcFilename, MOCAP_SCALE, pSkeleton);
-//
-//			pSkeleton1->SetTranslationZ(20.0);
-//			pSkeleton1->SetTranslationX(-10.0);
-//			pMotion1 = new Motion(amcFilename, MOCAP_SCALE, pSkeleton1);
-//
-//
-//			// backup the filename
-//			strcpy(lastMotionFilename, amcFilename);
-//
-//			// set sampled motion for display
-//			displayer.LoadMotion(pMotion);  
-//			displayer.LoadMotion(pMotion);      
-//
-//			if (lastSkeleton > lastMotion)         
-//				lastMotion++;
-//
-//			UpdateMaxFrameNumber();
-//			//resetPostureAccordingFrameSlider();
-//			//frame_slider->value(currentFrameIndex);
-//			//frame_slider->maximum((double)maxFrames);
-//			//frame_slider->redraw();
-//			//glwindow->redraw();
-//			//Fl::flush();
-//		}
-//	} // if (lastSkeleton > lastMotion)
-//
-//	//glwindow->redraw();
-//}
-
 
 void reload_callback(Fl_Button *button, void *) {
 	if (!displayer.GetNumSkeletons() != 0) {
@@ -531,8 +480,11 @@ void reload_callback(Fl_Button *button, void *) {
 	//pMotion = new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton);
 	//pMotion1 = new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton1);
 	// Set sampled motion for display
-	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton));   
-	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeleton1));
+	Skeleton *pSkeletonA = displayer.GetSkeleton(0);
+	Skeleton *pSkeletonB = displayer.GetSkeleton(1);
+
+	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeletonA));   
+	displayer.LoadMotion(new Motion(lastMotionFilename, MOCAP_SCALE, pSkeletonB));
 
 	resetPostureAccordingFrameSlider();
 	UpdateMaxFrameNumber();
@@ -1013,83 +965,15 @@ void Player_Gl_Window::draw() {
 		GraphicsInit();   
 	}
 
-	//Add motions HERE!!!
-	//char * filename = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\dance.asf";
-	//pSkeleton = new Skeleton(filename, MOCAP_SCALE);
-	//pSkeleton1 = new Skeleton(filename, MOCAP_SCALE);
-	//lastSkeleton++;
-	//// Set the rotations for all bones in their local coordinate system to 0
-	//// Set root position to (0, 0, 0)
-	//pSkeleton->setBasePosture();
-	//pSkeleton1->setBasePosture();
-	//float boneColor[3] = {1.0f, 0.5f, 1.0f}; // A-purple
-	//float boneColor1[3] = {0.5f, 1.0f, 1.0f};// B-greenblue
-	//displayer.LoadSkeleton(pSkeleton, boneColor);
-	//displayer1.LoadSkeleton(pSkeleton1, boneColor1);
-	//glwindow->redraw();
-
-	//string path = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\A_";
-	//string ext	= "_.amc";
-	//for(int i = 0; i < mvs; i++){
-	//	string total = path + to_string(i) + ext;
-	//	char * filename = new char[total.length()+1];
-	//	strcpy(filename, total.c_str());
-	//	motionData[i] = new Motion(filename, MOCAP_SCALE, pSkeleton);
-	//}
-	//int numFrames = 0;
-	//for(int i = 0; i < mlen; i++){
-	//	numFrames += motionData[seq[i]]->GetNumFrames();
-	//}
-	//int index = 0;
-	//Motion * motionA = new Motion(numFrames, pSkeleton);
-	//for(int i = 0; i < mlen; i++){
-	//	motionSeq[i] = motionData[seq[i]];
-	//	cout << motionData[seq[i]]->GetNumFrames() << endl;
-	//	for(int j = 0; j < motionData[seq[i]]->GetNumFrames(); j++){
-	//		motionA->SetPosture(index, *(motionSeq[i]->GetPosture(j)));
-	//		index++;
-	//	}
-	//}
-	//cout << "total frame number: " << numFrames << endl;
-	//char * filename_prime = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\21_01_B.amc";
-	//pSkeleton->SetTranslationZ(15.0);
-	//pSkeleton->SetTranslationX(40.0);
-	//pMotion = new Motion(filename, MOCAP_SCALE, pSkeleton); //A-purple
-
-	//pSkeleton1->SetTranslationZ(10.0);
-	//pSkeleton1->SetTranslationX(25.0);
-	//pMotion1 = new Motion(filename_prime, MOCAP_SCALE, pSkeleton1); //B-greenblue
-
-	//// backup the filename
-	//strcpy(lastMotionFilename, filename);
-
-	//// set sampled motion for display
-	////displayer.LoadMotion(pMotion);  
-	//displayer.LoadMotion(motionA);  
-	//displayer1.LoadMotion(pMotion1);      
-
-	//if (lastSkeleton > lastMotion)         
-	//	lastMotion++;
-
-	//UpdateMaxFrameNumber();
-	//resetPostureAccordingFrameSlider();
-	//frame_slider->value(currentFrameIndex);
-	//frame_slider->maximum((double)maxFrames);
-	//frame_slider->redraw();
-	//glwindow->redraw();
-	//Fl::flush();
-
-	// Redisplay the screen then put the proper buffer on the screen.
 	Redisplay();
 }
 
 int main(int argc, char **argv)  {
 	//random motion clip sequence
 	//const int len = 16;
-	//const int mvs = 4; // four kinds of moves: beak, wing, tail feather, claps
 	//int seq[len] = {};
-	for (int i = 0; i < mlen; i++){
-		seq[i] = rand() % mvs;
+	for (int i = 0; i < mlen; i++) {
+		seq[i] = rand() % NUM_MOVES;
 		cout << seq[i];
 	}
 
@@ -1123,8 +1007,9 @@ int main(int argc, char **argv)  {
 	performanceCounter.StopCounter();
 
 	if (argc > 2) {
-		char *filename;
+		Skeleton *pSkeleton = nullptr;
 
+		char *filename;
 		filename = argv[1];
 		if (filename != NULL) {
 			//Read skeleton from asf file
@@ -1140,7 +1025,7 @@ int main(int argc, char **argv)  {
 			filename = argv[2];
 			if (filename != NULL) {
 				//Read motion (.amc) file and create a motion
-				Motion *pMotion = new Motion(filename, MOCAP_SCALE,pSkeleton);
+				Motion *pMotion = new Motion(filename, MOCAP_SCALE, pSkeleton);
 
 				//set sampled motion for display
 				displayer.LoadMotion(pMotion);

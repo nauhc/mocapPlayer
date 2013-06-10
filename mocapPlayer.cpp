@@ -368,6 +368,7 @@ void load_callback(Fl_Button *button, void *) {
 			}
 		}
 	}
+
 	if (button == loadMotion_button) {
 		if (lastSkeleton >= 0 && lastSkeleton >= lastMotion) {
 			//char * filename = fl_file_chooser("Select one filename","*.AMC","");
@@ -549,21 +550,22 @@ void play_callback(Fl_Button * button, void *) {
 	if (button == pause_button)    { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = OFF; repeatButton = OFF; } 
 	if (button == repeat_button)   { minusOneButton = OFF; plusOneButton = OFF; rewindButton = OFF; playButton = ON;  repeatButton = ON;  }
 	if (button == rewind_button)   { minusOneButton = OFF; plusOneButton = OFF; rewindButton = ON;  playButton = OFF; repeatButton = OFF; }
-
-	if ((previousPlayButtonStatus == OFF) && (playButton == ON))
+	if ((previousPlayButtonStatus == OFF) && (playButton == ON)) {
 		framesIncrementDoublePrecision = 1.0;  // Just start playing the animation, no time has been measured
-
-	if (button == pause_button)
-		if (saveScreenToFile == SAVE_CONTINUOUS)
+	}
+	if (button == pause_button) {
+		if (saveScreenToFile == SAVE_CONTINUOUS) {
 			saveScreenToFile = SAVE_DISABLED;
+		}
+	}
 }
 
-void record_callback(Fl_Light_Button * button, void * )
-{
-	if ((SwitchStatus)(record_button->value()) == OFF)
+void record_callback(Fl_Light_Button * button, void * ) {
+	if ((SwitchStatus)(record_button->value()) == OFF) {
 		saveScreenToFile = SAVE_DISABLED;
-	else
+	} else {
 		saveScreenToFile = SAVE_CONTINUOUS;
+	}
 	glwindow->redraw();
 }
 
@@ -583,97 +585,83 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 	}
 
 	if (displayer.GetSkeletonMotion(0) != NULL && displayer.GetSkeletonMotion(1) != NULL){
-			int postureID;
-			if (frameIndex >= displayer.GetSkeletonMotion(0)->GetNumFrames()) {
-				postureID = displayer.GetSkeletonMotion(0)->GetNumFrames() - 1;
-			} else {
-				postureID = frameIndex;
-			}
+		int postureID;
+		if (frameIndex >= displayer.GetSkeletonMotion(0)->GetNumFrames()) {
+			postureID = displayer.GetSkeletonMotion(0)->GetNumFrames() - 1;
+		} else {
+			postureID = frameIndex;
+		}
 
-			int postureID1 = postureID - 50;
-			if (postureID1 < 0) postureID1 = 0;
+		int postureID1 = postureID - 50;
+		if (postureID1 < 0) postureID1 = 0;
 
-			Posture *pA = displayer.GetSkeletonMotion(0)->GetPosture(postureID);
-			Posture *pB = displayer.GetSkeletonMotion(0)->GetPosture(postureID1);
+		Posture *pA = displayer.GetSkeletonMotion(0)->GetPosture(postureID);
+		Posture *pB = displayer.GetSkeletonMotion(0)->GetPosture(postureID1);
 
-			displayer.GetSkeleton(0)->setPosture(*pA);
-			displayer.GetSkeleton(1)->setPosture(*pB);
+		displayer.GetSkeleton(0)->setPosture(*pA);
+		displayer.GetSkeleton(1)->setPosture(*pB);
 	}
 }
 
 // Write a screen-shot, in the PPM format, to the specified filename, in PPM format
-void saveScreenshot(int windowWidth, int windowHeight, char * filename)
-{
-	if (filename == NULL)
+void saveScreenshot(int windowWidth, int windowHeight, char * filename) {
+	if (filename == NULL) {
 		return;
-
-	// Allocate a picture buffer 
-	Pic * in = pic_alloc(windowWidth, windowHeight, 3, NULL);
-
-	printf("File to save to: %s\n", filename);
-
-	for (int i=windowHeight-1; i>=0; i--) 
-	{
-		glReadPixels(0, windowHeight-i-1, windowWidth, 1, GL_RGB, GL_UNSIGNED_BYTE,
-			&in->pix[i*in->nx*in->bpp]);
 	}
 
-	if (ppm_write(filename, in))
-		printf("File saved Successfully\n");
-	else
-		printf("Error in Saving\n");
+	// Allocate a picture buffer 
+	Pic *in = pic_alloc(windowWidth, windowHeight, 3, NULL);
+	printf("File to save to: %s\n", filename);
 
+	for (int i=windowHeight-1; i>=0; i--)  {
+		glReadPixels(0, windowHeight-i-1, windowWidth, 1, GL_RGB, 
+			GL_UNSIGNED_BYTE, &in->pix[i*in->nx*in->bpp]);
+	}
+
+	if (ppm_write(filename, in)) {
+		printf("File saved Successfully\n");
+	} else {
+		printf("Error in Saving\n");
+	}
 	pic_free(in);
 }
-void idle(void*)
-{
-	if (previousPlayButtonStatus == ON)  
-	{
+
+void idle(void*) {
+	if (previousPlayButtonStatus == ON) {
 		// it means we should measure the interval between two frames
 		// if it is too tiny, we should slow down the motion
 		performanceCounter.StopCounter();
 		double actualTimeCostOneFrame = performanceCounter.GetElapsedTime(); // in seconds
 
 		// time spent on saving the screen in previous time-step should be excluded
-		if (saveFileTimeCost > 0.0)   
+		if (saveFileTimeCost > 0.0) {
 			actualTimeCostOneFrame -= saveFileTimeCost;
+		}
 
 		framesIncrementDoublePrecision = actualTimeCostOneFrame * expectedFPS;
 	}
 	// start counter at the beginning of the new round
-	if (playButton == ON)
+	if (playButton == ON) {
 		performanceCounter.StartCounter();
+	}
 
-	if(rewindButton == ON)
-	{
+	if (rewindButton == ON) {
 		currentFrameIndex = 0;
 		currentFrameIndexDoublePrecision = 0.0;
-		for (int i = 0; i < displayer.GetNumSkeletons(); i++)
-		{
-			if (displayer.GetSkeletonMotion(i) != NULL)
-			{
+		for (int i = 0; i < displayer.GetNumSkeletons(); i++) {
+			if (displayer.GetSkeletonMotion(i) != NULL) {
 				Posture * initSkeleton = displayer.GetSkeletonMotion(i)->GetPosture(0);
 				displayer.GetSkeleton(i)->setPosture(*initSkeleton);
 			}
 		}
-		/*for (int i = 0; i < displayer1.GetNumSkeletons(); i++)
-		{
-			if (displayer1.GetSkeletonMotion(i) != NULL)
-			{
-				Posture * initSkeleton = displayer1.GetSkeletonMotion(i)->GetPosture(0);
-				displayer1.GetSkeleton(i)->setPosture(*initSkeleton);
-			}
-		}*/
 		rewindButton = OFF;
 	}
 
 	// Initialization
 	saveFileTimeCost = -1.0;
 
-	if(playButton == ON) 
-	{
-		if (saveScreenToFile == SAVE_CONTINUOUS)
-		{
+	if (playButton == ON) {
+		if (saveScreenToFile == SAVE_CONTINUOUS) {
 			saveFileTimeCounter.StartCounter();
 			CreateScreenFilename(SAVE_CONTINUOUS, saveScreenToFileContinuousCount, saveScreenToFileContinuousFilename);
 			saveScreenshot(640, 480, saveScreenToFileContinuousFilename);
@@ -683,54 +671,44 @@ void idle(void*)
 			saveFileTimeCost = saveFileTimeCounter.GetElapsedTime();
 		}
 
-		if (saveScreenToFile == SAVE_CONTINUOUS)
-		{
+		if (saveScreenToFile == SAVE_CONTINUOUS) {
 			currentFrameIndexDoublePrecision += 1.0;
-		}
-		else
-		{
+		} else {
 			currentFrameIndexDoublePrecision += framesIncrementDoublePrecision;
 		}
 
 		currentFrameIndex = (int)currentFrameIndexDoublePrecision;
 
-		if(currentFrameIndex >= maxFrames)
-		{
-			if (repeatButton == ON)
-			{
+		if (currentFrameIndex >= maxFrames) {
+			if (repeatButton == ON) {
 				currentFrameIndex = 0;
 				currentFrameIndexDoublePrecision = 0.0;
-			}
-			else  // repeat button is OFF
-			{
+			} else { // repeat button is OFF
 				currentFrameIndex = maxFrames - 1;
 				currentFrameIndexDoublePrecision = currentFrameIndex;
 				playButton = OFF;  // important, especially in "recording" mode
 			}
 		}
 
-		if (currentFrameIndex < 0)
-		{
+		if (currentFrameIndex < 0) {
 			currentFrameIndex = 0;
 			currentFrameIndexDoublePrecision = 0.0;
 		}
 
 		SetSkeletonsToSpecifiedFrame(currentFrameIndex);
-
 		frame_slider->value((double) currentFrameIndex + 1);
 	}  // if(playButton == ON)
 
-	if (minusOneButton == ON)
-		if (displayer.GetNumSkeletons() != 0)
-		{
+	if (minusOneButton == ON) {
+		if (displayer.GetNumSkeletons() != 0) {
 			currentFrameIndex--;
-			if (currentFrameIndex < 0)
+			if (currentFrameIndex < 0) {
 				currentFrameIndex = 0;
+			}
 			frame_slider->value((double) currentFrameIndex + 1);
 
 			SetSkeletonsToSpecifiedFrame(currentFrameIndex);    
-			if (saveScreenToFile == SAVE_CONTINUOUS)
-			{
+			if (saveScreenToFile == SAVE_CONTINUOUS) {
 				CreateScreenFilename(SAVE_CONTINUOUS, saveScreenToFileContinuousCount, saveScreenToFileContinuousFilename);
 				saveScreenshot(640, 480, saveScreenToFileContinuousFilename);
 				printf("%s is saved to disk.\n", saveScreenToFileContinuousFilename);
@@ -738,37 +716,33 @@ void idle(void*)
 			}
 			minusOneButton = OFF;
 		}
+	}
 
-		if (plusOneButton == ON)
-		{
-			if (displayer.GetNumSkeletons() != 0)
-			{
-				currentFrameIndex++;
-				if (currentFrameIndex >= maxFrames)
-					currentFrameIndex = maxFrames - 1;
-				frame_slider->value((double) currentFrameIndex + 1);
-
-				SetSkeletonsToSpecifiedFrame(currentFrameIndex);
-				if (saveScreenToFile == SAVE_CONTINUOUS)
-				{
-					CreateScreenFilename(SAVE_CONTINUOUS, saveScreenToFileContinuousCount, saveScreenToFileContinuousFilename);
-					saveScreenshot(640, 480, saveScreenToFileContinuousFilename);
-					printf("%s is saved to disk.\n", saveScreenToFileContinuousFilename);
-					saveScreenToFileContinuousCount++;
-				}
-				plusOneButton = OFF;
+	if (plusOneButton == ON) {
+		if (displayer.GetNumSkeletons() != 0) {
+			currentFrameIndex++;
+			if (currentFrameIndex >= maxFrames) {
+				currentFrameIndex = maxFrames - 1;
 			}
+			frame_slider->value((double) currentFrameIndex + 1);
+
+			SetSkeletonsToSpecifiedFrame(currentFrameIndex);
+			if (saveScreenToFile == SAVE_CONTINUOUS) {
+				CreateScreenFilename(SAVE_CONTINUOUS, saveScreenToFileContinuousCount, saveScreenToFileContinuousFilename);
+				saveScreenshot(640, 480, saveScreenToFileContinuousFilename);
+				printf("%s is saved to disk.\n", saveScreenToFileContinuousFilename);
+				saveScreenToFileContinuousCount++;
+			}
+			plusOneButton = OFF;
 		}
+	}
 
-		frame_slider->value((double)(currentFrameIndex + 1));
-
-		previousPlayButtonStatus = playButton; // Super important updating
-
-		glwindow->redraw();
+	frame_slider->value((double)(currentFrameIndex + 1));
+	previousPlayButtonStatus = playButton; // Super important updating
+	glwindow->redraw();
 }
 
-void fslider_callback(Fl_Value_Slider *slider, long val)
-{
+void fslider_callback(Fl_Value_Slider *slider, long val) {
 	currentFrameIndex = (int) frame_slider->value() - 1;
 	currentFrameIndexDoublePrecision = currentFrameIndex;
 	minusOneButton = OFF; 
@@ -780,24 +754,20 @@ void fslider_callback(Fl_Value_Slider *slider, long val)
 	Fl::flush();
 }
 
-void playSpeed_callback(Fl_Value_Input *obj, void *)
-{
+void playSpeed_callback(Fl_Value_Input *obj, void *) {
 	//framesIncrementDoublePrecision = speedUp->value();
 	double speedRatio = speedUp->value();
 	expectedFPS = standardFPS * speedRatio;
 	glwindow->redraw();
 }
 
-void spotJoint_callback(Fl_Value_Input *obj, void *)
-{
+void spotJoint_callback(Fl_Value_Input *obj, void *) {
 	displayer.SetDisplayedSpotJoint((int) joint_idx->value());
 	glwindow->redraw();
 }
 
-void skeletonID_callback(Fl_Value_Input *obj, void*)
-{
-	int subnum;
-	subnum = (int)sub_input->value();
+void skeletonID_callback(Fl_Value_Input *obj, void*) {
+	int subnum = (int)sub_input->value();
 
 	if (subnum < 0) {
 		sub_input->value(0);
@@ -809,9 +779,11 @@ void skeletonID_callback(Fl_Value_Input *obj, void*)
 
 	// Change values of other inputs to match sub-number
 	double translation[3];
-	displayer.GetSkeleton(subnum)->GetTranslation(translation);
 	double rotationAngle[3];
+	
+	displayer.GetSkeleton(subnum)->GetTranslation(translation);
 	displayer.GetSkeleton(subnum)->GetRotationAngle(rotationAngle);
+	
 	tx_input->value(translation[0]);
 	ty_input->value(translation[1]);
 	tz_input->value(translation[2]);

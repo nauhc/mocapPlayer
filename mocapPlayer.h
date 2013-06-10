@@ -6,6 +6,7 @@ All the user interface functions .
 Revision 1 - Steve Lin (CMU), Jan 14, 2002
 Revision 2 - Alla Safonova and Kiran Bhat (CMU), Jan 18, 2002
 Revision 3 - Jernej Barbic and Yili Zhao (USC), Feb, 2012
+Revision 4 - Chuan Wang (UCD), Jun, 2013
 
 */
 
@@ -14,8 +15,7 @@ Revision 3 - Jernej Barbic and Yili Zhao (USC), Feb, 2012
 
 #include <FL/Fl_Gl_Window.H>
 
-class Player_Gl_Window : public Fl_Gl_Window 
-{
+class Player_Gl_Window : public Fl_Gl_Window {
 public:
   inline Player_Gl_Window(int x, int y, int w, int h, const char *l=0) : 
   Fl_Gl_Window(x, y, w, h, l) {};

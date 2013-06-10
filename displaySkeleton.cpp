@@ -3,6 +3,7 @@
 Revision 1 - Steve Lin (CMU), Jan 14, 2002
 Revision 2 - Alla Safonova and Kiran Bhat (CMU), Jan 18, 2002
 Revision 3 - Jernej Barbic and Yili Zhao (USC), Feb, 2012
+Revision 4 - Chuan Wang (UCD), Jun, 2013
 
 */
 #include <cstdio>
@@ -34,8 +35,8 @@ DisplaySkeleton::DisplaySkeleton(void)
   numSkeletons = 0;
   for(int skeletonIndex = 0; skeletonIndex < MAX_SKELS; skeletonIndex++)
   {
-    m_pSkeleton[skeletonIndex] = NULL;
-    m_pMotion[skeletonIndex] = NULL;
+	m_pSkeleton[skeletonIndex] = NULL;
+	m_pMotion[skeletonIndex] = NULL;
   }
 }
 
@@ -99,33 +100,33 @@ void DisplaySkeleton::SetDisplayList(int skeletonID, Bone *bone, GLuint *pBoneLi
 
   for(int j=0;j<numbones;j++)
   {
-    glNewList(*pBoneList + j, GL_COMPILE);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, jointAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, jointDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, jointSpecular);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, jointShininess);
-    glPushMatrix();
-    glScalef(float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone));
-    gluSphere(qobj, jointRadius, 20, 20);
-    glPopMatrix();
+	glNewList(*pBoneList + j, GL_COMPILE);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, jointAmbient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, jointDiffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, jointSpecular);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, jointShininess);
+	glPushMatrix();
+	glScalef(float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone));
+	gluSphere(qobj, jointRadius, 20, 20);
+	glPopMatrix();
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boneAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boneDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, boneSpecular);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, boneShininess);
-    glPushMatrix();
-    glScalef(float(bone[j].aspx), float(bone[j].aspy), 1.0f);
-    gluCylinder(qobj, boneRadius, boneRadius, bone[j].length, 20, 20);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boneAmbient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boneDiffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, boneSpecular);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, boneShininess);
+	glPushMatrix();
+	glScalef(float(bone[j].aspx), float(bone[j].aspy), 1.0f);
+	gluCylinder(qobj, boneRadius, boneRadius, bone[j].length, 20, 20);
 
-    // Two disks to close the cylinder at the bottom and the top
-    gluDisk(qobj, 0.0, boneRadius, 20, 20);
-    glPushMatrix();
-    glTranslatef(0.0f, 0.0f, float(bone[j].length));
-    gluDisk(qobj, 0.0, boneRadius, 20, 20);
-    glPopMatrix();
-    
-    glPopMatrix();    
-    glEndList();
+	// Two disks to close the cylinder at the bottom and the top
+	gluDisk(qobj, 0.0, boneRadius, 20, 20);
+	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, float(bone[j].length));
+	gluDisk(qobj, 0.0, boneRadius, 20, 20);
+	glPopMatrix();
+	
+	glPopMatrix();    
+	glEndList();
   }
 }
 void DisplaySkeleton::SetDisplayList(int skeletonID, Bone *bone, GLuint *pBoneList, float boneColor[3])
@@ -160,33 +161,33 @@ void DisplaySkeleton::SetDisplayList(int skeletonID, Bone *bone, GLuint *pBoneLi
 
   for(int j=0;j<numbones;j++)
   {
-    glNewList(*pBoneList + j, GL_COMPILE);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, jointAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, jointDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, jointSpecular);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, jointShininess);
-    glPushMatrix();
-    glScalef(float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone));
-    gluSphere(qobj, jointRadius, 20, 20);
-    glPopMatrix();
+	glNewList(*pBoneList + j, GL_COMPILE);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, jointAmbient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, jointDiffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, jointSpecular);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, jointShininess);
+	glPushMatrix();
+	glScalef(float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone), float(bone[j].aspy + sizeDifferenceJointAndBone));
+	gluSphere(qobj, jointRadius, 20, 20);
+	glPopMatrix();
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boneAmbient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boneDiffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, boneSpecular);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, boneShininess);
-    glPushMatrix();
-    glScalef(float(bone[j].aspx), float(bone[j].aspy), 1.0f);
-    gluCylinder(qobj, boneRadius, boneRadius, bone[j].length, 20, 20);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, boneAmbient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, boneDiffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, boneSpecular);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, boneShininess);
+	glPushMatrix();
+	glScalef(float(bone[j].aspx), float(bone[j].aspy), 1.0f);
+	gluCylinder(qobj, boneRadius, boneRadius, bone[j].length, 20, 20);
 
-    // Two disks to close the cylinder at the bottom and the top
-    gluDisk(qobj, 0.0, boneRadius, 20, 20);
-    glPushMatrix();
-    glTranslatef(0.0f, 0.0f, float(bone[j].length));
-    gluDisk(qobj, 0.0, boneRadius, 20, 20);
-    glPopMatrix();
-    
-    glPopMatrix();    
-    glEndList();
+	// Two disks to close the cylinder at the bottom and the top
+	gluDisk(qobj, 0.0, boneRadius, 20, 20);
+	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, float(bone[j].length));
+	gluDisk(qobj, 0.0, boneRadius, 20, 20);
+	glPopMatrix();
+	
+	glPopMatrix();    
+	glEndList();
   }
 }
 
@@ -225,48 +226,48 @@ void DisplaySkeleton::DrawBone(Bone *pBone,int skelNum)
   //Draw the local coordinate system for the selected bone.
   if(renderMode == BONES_AND_LOCAL_FRAMES)
   {
-    int i;
-    for(i = 0; i < jointsDisplayNum; i++)
-      if (pBone->idx == jointsDisplay[i])
+	int i;
+	for(i = 0; i < jointsDisplayNum; i++)
+	  if (pBone->idx == jointsDisplay[i])
 	break;
-    if (i < jointsDisplayNum)
-    {
-      GLint lightingStatus;
-      glGetIntegerv(GL_LIGHTING, &lightingStatus);
-      glDisable(GL_LIGHTING);
-      DrawSpotJointAxis();
-      if (lightingStatus)
-        glEnable(GL_LIGHTING);
-    }
+	if (i < jointsDisplayNum)
+	{
+	  GLint lightingStatus;
+	  glGetIntegerv(GL_LIGHTING, &lightingStatus);
+	  glDisable(GL_LIGHTING);
+	  DrawSpotJointAxis();
+	  if (lightingStatus)
+		glEnable(GL_LIGHTING);
+	}
   }
 */
 
   //Draw the local coordinate system for the selected bone.
   if((renderMode == BONES_AND_LOCAL_FRAMES) && (pBone->idx == m_SpotJoint))
   {
-    GLint lightingStatus;
-    glGetIntegerv(GL_LIGHTING, &lightingStatus);
-    glDisable(GL_LIGHTING);
-    DrawSpotJointAxis();
-    if (lightingStatus)
-      glEnable(GL_LIGHTING);
+	GLint lightingStatus;
+	glGetIntegerv(GL_LIGHTING, &lightingStatus);
+	glDisable(GL_LIGHTING);
+	DrawSpotJointAxis();
+	if (lightingStatus)
+	  glEnable(GL_LIGHTING);
   }
 
   //translate AMC (rarely used)
   if(pBone->doftz) 
-    glTranslatef(0.0f, 0.0f, float(pBone->tz));
+	glTranslatef(0.0f, 0.0f, float(pBone->tz));
   if(pBone->dofty) 
-    glTranslatef(0.0f, float(pBone->ty), 0.0f);
+	glTranslatef(0.0f, float(pBone->ty), 0.0f);
   if(pBone->doftx) 
-    glTranslatef(float(pBone->tx), 0.0f, 0.0f);
+	glTranslatef(float(pBone->tx), 0.0f, 0.0f);
 
   //rotate AMC 
   if(pBone->dofrz) 
-    glRotatef(float(pBone->rz), 0.0f, 0.0f, 1.0f);
+	glRotatef(float(pBone->rz), 0.0f, 0.0f, 1.0f);
   if(pBone->dofry) 
-    glRotatef(float(pBone->ry), 0.0f, 1.0f, 0.0f);
+	glRotatef(float(pBone->ry), 0.0f, 1.0f, 0.0f);
   if(pBone->dofrx) 
-    glRotatef(float(pBone->rx), 1.0f, 0.0f, 0.0f);
+	glRotatef(float(pBone->rx), 1.0f, 0.0f, 0.0f);
 
   //Store the current ModelviewMatrix (before adding the translation part)
   glPushMatrix();
@@ -282,19 +283,19 @@ void DisplaySkeleton::DrawBone(Bone *pBone,int skelNum)
   // with its major axis parallel to X axis) to its correct orientation
   if(pBone->idx == Skeleton::getRootIndex())
   {
-    // glCallList(m_BoneList[skelNum] + pBone->idx);  // no need to draw the root here any more (it is not a bone) 
+	// glCallList(m_BoneList[skelNum] + pBone->idx);  // no need to draw the root here any more (it is not a bone) 
   }
   else
   { 
-    //Compute the angle between the canonical pose and the correct orientation 
-    //(specified in pBone->dir) using cross product.
-    //Using the formula: r_axis = z_dir x pBone->dir
-    v3_cross(z_dir, pBone->dir, r_axis);
+	//Compute the angle between the canonical pose and the correct orientation 
+	//(specified in pBone->dir) using cross product.
+	//Using the formula: r_axis = z_dir x pBone->dir
+	v3_cross(z_dir, pBone->dir, r_axis);
 
-    theta =  GetAngle(z_dir, pBone->dir, r_axis);
+	theta =  GetAngle(z_dir, pBone->dir, r_axis);
 
-    glRotatef(float(theta*180./M_PI), float(r_axis[0]), float(r_axis[1]), float(r_axis[2]));
-    glCallList(m_BoneList[skelNum] + pBone->idx);
+	glRotatef(float(theta*180./M_PI), float(r_axis[0]), float(r_axis[1]), float(r_axis[2]));
+	glCallList(m_BoneList[skelNum] + pBone->idx);
   }
 
   glPopMatrix(); 
@@ -342,11 +343,11 @@ void DisplaySkeleton::Traverse(Bone *ptr,int skelNum)
 {
   if(ptr != NULL)
   {
-    glPushMatrix();
-    DrawBone(ptr,skelNum);
-    Traverse(ptr->child,skelNum);
-    glPopMatrix();
-    Traverse(ptr->sibling,skelNum);
+	glPushMatrix();
+	DrawBone(ptr,skelNum);
+	Traverse(ptr->child,skelNum);
+	glPopMatrix();
+	Traverse(ptr->sibling,skelNum);
   }
 }
 
@@ -365,11 +366,11 @@ void DisplaySkeleton::Render(RenderMode renderMode_)
   //draw the skeleton starting from the root
   for (int i = 0; i < numSkeletons; i++)
   {
-    glPushMatrix();
-    double translation[3];
-    m_pSkeleton[i]->GetTranslation(translation);
-    double rotationAngle[3];
-    m_pSkeleton[i]->GetRotationAngle(rotationAngle);
+	glPushMatrix();
+	double translation[3];
+	m_pSkeleton[i]->GetTranslation(translation);
+	double rotationAngle[3];
+	m_pSkeleton[i]->GetRotationAngle(rotationAngle);
 
 	if(i == 0){
 		double root[3];
@@ -378,65 +379,56 @@ void DisplaySkeleton::Render(RenderMode renderMode_)
 	}
 
 
-    glTranslatef(float(MOCAP_SCALE * translation[0]), 
+	glTranslatef(float(MOCAP_SCALE * translation[0]), 
 		float(MOCAP_SCALE * translation[1]), float(MOCAP_SCALE * translation[2]));
-    glRotatef(float(rotationAngle[0]), 1.0f, 0.0f, 0.0f);
-    glRotatef(float(rotationAngle[1]), 0.0f, 1.0f, 0.0f);
-    glRotatef(float(rotationAngle[2]), 0.0f, 0.0f, 1.0f);
-    Traverse(m_pSkeleton[i]->getRoot(),i);
+	glRotatef(float(rotationAngle[0]), 1.0f, 0.0f, 0.0f);
+	glRotatef(float(rotationAngle[1]), 0.0f, 1.0f, 0.0f);
+	glRotatef(float(rotationAngle[2]), 0.0f, 0.0f, 1.0f);
+	Traverse(m_pSkeleton[i]->getRoot(),i);
 
-    glPopMatrix();
+	glPopMatrix();
   }
 
 
   glPopMatrix();
 }
 
-//void DisplaySkeleton::LoadMotion(Motion * pMotion)
-//{
-//  // always load the motion for the latest skeleton
-//  if(m_pMotion[numSkeletons - 1] != NULL) 
-//    delete m_pMotion[numSkeletons - 1];
-//  m_pMotion[numSkeletons - 1] = pMotion;
-//}
-void DisplaySkeleton::LoadMotion(Motion * pMotion)
-{
-	if (numMotions >= MAX_SKELS) 
+void DisplaySkeleton::LoadMotion(Motion *pMotion) {
+	if (numMotions >= MAX_SKELS) {
 		return;
+	}
 	m_pMotion[numMotions] = pMotion;
 	numMotions++;
 }
 
-//Set skeleton for display
-void DisplaySkeleton::LoadSkeleton(Skeleton *pSkeleton)
-{
-  if (numSkeletons >= MAX_SKELS) 
-    return;
+// Set skeleton for display
+void DisplaySkeleton::LoadSkeleton(Skeleton *pSkeleton) {
+	if (numSkeletons >= MAX_SKELS) {
+		return;
+	}
+	m_pSkeleton[numSkeletons] = pSkeleton;
 
-  m_pSkeleton[numSkeletons] = pSkeleton;
-
-  //Create the display list for the skeleton
-  //All the bones are the elongated spheres centered at (0,0,0).
-  //The axis of elongation is the X axis.
-  SetDisplayList(numSkeletons, m_pSkeleton[numSkeletons]->getRoot(), &m_BoneList[numSkeletons]);
-  numSkeletons++;
-}
-void DisplaySkeleton::LoadSkeleton(Skeleton *pSkeleton, float color[3])
-{
-  if (numSkeletons >= MAX_SKELS) 
-    return;
-
-  m_pSkeleton[numSkeletons] = pSkeleton;
-
-  //Create the display list for the skeleton
-  //All the bones are the elongated spheres centered at (0,0,0).
-  //The axis of elongation is the X axis.
-  SetDisplayList(numSkeletons, m_pSkeleton[numSkeletons]->getRoot(), &m_BoneList[numSkeletons], color);
-  numSkeletons++;
+	// Create the display list for the skeleton
+	// All the bones are the elongated spheres centered at (0,0,0).
+	// The axis of elongation is the X axis.
+	SetDisplayList(numSkeletons, m_pSkeleton[numSkeletons]->getRoot(), &m_BoneList[numSkeletons]);
+	numSkeletons++;
 }
 
-void DisplaySkeleton::RenderShadow(double ground[4], double light[4])
-{
+void DisplaySkeleton::LoadSkeleton(Skeleton *pSkeleton, float color[3]) {
+	if (numSkeletons >= MAX_SKELS) {
+		return;
+	}
+	m_pSkeleton[numSkeletons] = pSkeleton;
+
+	// Create the display list for the skeleton
+	// All the bones are the elongated spheres centered at (0,0,0).
+	// The axis of elongation is the X axis.
+	SetDisplayList(numSkeletons, m_pSkeleton[numSkeletons]->getRoot(), &m_BoneList[numSkeletons], color);
+	numSkeletons++;
+}
+
+void DisplaySkeleton::RenderShadow(double ground[4], double light[4]) {
   GLint lightingStatus;
   glGetIntegerv(GL_LIGHTING, &lightingStatus);
   glDisable(GL_LIGHTING);
@@ -448,47 +440,36 @@ void DisplaySkeleton::RenderShadow(double ground[4], double light[4])
   glPopMatrix();
 
   if (lightingStatus)
-    glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHTING);
 }
 
-Motion * DisplaySkeleton::GetSkeletonMotion(int skeletonIndex)
-{
-  if (skeletonIndex < 0 || skeletonIndex >= MAX_SKELS)
-  {
-    printf("Error in DisplaySkeleton::GetSkeletonMotion: index %d is illegal.\n", skeletonIndex);
-    exit(0);
-  }
-  return m_pMotion[skeletonIndex]; 
+Motion * DisplaySkeleton::GetSkeletonMotion(int skeletonIndex) {
+	if (skeletonIndex < 0 || skeletonIndex >= MAX_SKELS) {
+		printf("Error in DisplaySkeleton::GetSkeletonMotion: index %d is illegal.\n", skeletonIndex);
+		exit(0);
+	}
+	return m_pMotion[skeletonIndex]; 
 }
 
-Skeleton * DisplaySkeleton::GetSkeleton(int skeletonIndex)
-{
-  if (skeletonIndex < 0 || skeletonIndex >= numSkeletons)
-  {
-    printf("Error in DisplaySkeleton::GetSkeleton: skeleton index %d is illegal.\n", skeletonIndex);
-    exit(0);
-  }
-  return m_pSkeleton[skeletonIndex];
+Skeleton * DisplaySkeleton::GetSkeleton(int skeletonIndex) {
+	if (skeletonIndex < 0 || skeletonIndex >= numSkeletons) {
+		printf("Error in DisplaySkeleton::GetSkeleton: skeleton index %d is illegal.\n", skeletonIndex);
+		exit(0);
+	}
+	return m_pSkeleton[skeletonIndex];
 }
 
-void DisplaySkeleton::Reset(void)
-{
-  for(int skeletonIndex = 0; skeletonIndex < MAX_SKELS; skeletonIndex++)
-  {
-    if (m_pSkeleton[skeletonIndex] != NULL)
-    {
-      delete (m_pSkeleton[skeletonIndex]);
-      glDeleteLists(m_BoneList[skeletonIndex], 1);
-      m_pSkeleton[skeletonIndex] = NULL;
-    }
-    if (m_pMotion[skeletonIndex] != NULL)
-    {
-      delete (m_pMotion[skeletonIndex]);
-      m_pMotion[skeletonIndex] = NULL;
-    }
-  }
-  numSkeletons = 0;
+void DisplaySkeleton::Reset(void) {
+	for(int skeletonIndex = 0; skeletonIndex < MAX_SKELS; skeletonIndex++) {
+		if (m_pSkeleton[skeletonIndex] != NULL) {
+			delete (m_pSkeleton[skeletonIndex]);
+			glDeleteLists(m_BoneList[skeletonIndex], 1);
+			m_pSkeleton[skeletonIndex] = NULL;
+		}
+		if (m_pMotion[skeletonIndex] != NULL) {
+			delete (m_pMotion[skeletonIndex]);
+			m_pMotion[skeletonIndex] = NULL;
+		}
+	}
+	numSkeletons = 0;
 }
-
-
-

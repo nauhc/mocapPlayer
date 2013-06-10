@@ -372,10 +372,10 @@ void DisplaySkeleton::Render(RenderMode renderMode_)
 	double rotationAngle[3];
 	m_pSkeleton[i]->GetRotationAngle(rotationAngle);
 
-	if(i == 0){
+	if (i == 0) {
 		double root[3];
 		m_pSkeleton[0]->GetRootPosGlobal(root);
-		std::cout << root[0] << ", " << root[1] << ", " << root[2] << std::endl;
+		//std::cout << root[0] << ", " << root[1] << ", " << root[2] << std::endl;
 	}
 
 

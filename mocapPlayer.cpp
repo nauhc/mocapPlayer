@@ -31,7 +31,7 @@ Revision 4 - Chuan Wang (UCD), Jun, 2013
 #include "displaySkeleton.h"   
 #include "performanceCounter.h"
 
-//#include <vector>
+// #include <vector>
 #include <string>
 #include <iostream>
 using namespace std;
@@ -60,7 +60,12 @@ char lastMotionFilename[FILENAME_MAX];
 
 const int NUM_MOVE_TYPE = 4; // four kinds of moves_: beak(0), wing(1), tail feather(2), claps(3)
 const int NUM_MOVE_SEQ = 16; // length of motion = 16 moves
+const int NUM_LEARNING_STEPS = 50;
 Motion *moves_[NUM_MOVE_TYPE];
+Posture *postureLearningBuffer_[NUM_LEARNING_STEPS];
+int postureLearningOffset_ = 0;
+//std::vector<Posture*> postureLearningBuffer;
+// Posture *posBuffer[NUM_LEARNING_STEPS];
 
 int seq[NUM_MOVE_SEQ] = {};
 
@@ -97,10 +102,8 @@ PerformanceCounter performanceCounter;
 PerformanceCounter saveFileTimeCounter;
 double saveFileTimeCost = -1.0; // if value is negative, it means the data is invalid
 
-void CreateScreenFilename(SaveScreenToFileMode saveToFileMode, int fileCount, char * filename)
-{
-	switch (saveToFileMode)
-	{
+void CreateScreenFilename(SaveScreenToFileMode saveToFileMode, int fileCount, char * filename) {
+	switch (saveToFileMode) {
 	case SAVE_ONCE:
 		strcpy(filename, "scr");
 		break;
@@ -117,8 +120,7 @@ void CreateScreenFilename(SaveScreenToFileMode saveToFileMode, int fileCount, ch
 	strcat(filename, s);
 }
 
-static void RenderWorldAxes() 
-{
+static void RenderWorldAxes() {
 	glBegin(GL_LINES);
 
 	/* draw x axis in red, y axis in green, z axis in blue */
@@ -136,8 +138,8 @@ static void RenderWorldAxes()
 	glEnd();
 }
 
-void RenderGroundPlane(double groundPlaneSize, double groundPlaneHeight, double rPlane, double gPlane, double bPlane, double ambientFskeleton, double diffuseFskeleton, double specularFskeleton, double shininess)
-{
+void RenderGroundPlane(double groundPlaneSize, double groundPlaneHeight, double rPlane, double gPlane, double bPlane, 
+					   double ambientFskeleton, double diffuseFskeleton, double specularFskeleton, double shininess) {
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(1.0,1.0);
 
@@ -152,9 +154,8 @@ void RenderGroundPlane(double groundPlaneSize, double groundPlaneHeight, double 
 	glNormal3f(0,1,0);
 	const int planeResolution = 100;
 	double planeIncrement = groundPlaneSize / planeResolution;
-	for(int i=0; i<planeResolution; i++)
-		for(int j=0; j<planeResolution; j++)
-		{
+	for(int i=0; i<planeResolution; i++) {
+		for(int j=0; j<planeResolution; j++) {
 			float planeAmbientAct[4] = { (float)(ambientFskeleton * rPlane), (float)(ambientFskeleton * gPlane), (float)(ambientFskeleton * bPlane), 1.0f};
 			float factor = (((i+j) % 2) == 0) ? 0.5f : 1.0f;
 			planeAmbientAct[0] *= factor;
@@ -169,6 +170,7 @@ void RenderGroundPlane(double groundPlaneSize, double groundPlaneHeight, double 
 			glVertex3f((float)(-groundPlaneSize/2 + (i+1) * planeIncrement), (float)groundPlaneHeight, (float)(-groundPlaneSize/2 + j * planeIncrement));
 			glEnd();
 		}
+	}
 		glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
@@ -310,17 +312,17 @@ void load_callback(Fl_Button *button, void *) {
 		if (lastSkeleton <= lastMotion) { 
 			char *filename = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\dance.asf";
 			// Read skeleton from asf file
-			Skeleton *pSkeleton = new Skeleton(filename, MOCAP_SCALE);
-			Skeleton *pSkeleton1 = new Skeleton(filename, MOCAP_SCALE);
+			Skeleton *pSkeletonA = new Skeleton(filename, MOCAP_SCALE);
+			Skeleton *pSkeletonB = new Skeleton(filename, MOCAP_SCALE);
 			lastSkeleton++;
 			// Set the rotations for all bones in their local coordinate system to 0
 			// Set root position to (0, 0, 0)
-			pSkeleton->setBasePosture();
-			pSkeleton1->setBasePosture();
-			float boneColor[3] = {1.0f, 0.5f, 1.0f}; // A-purple
-			float boneColor1[3] = {0.5f, 1.0f, 1.0f};// B-greenblue
-			displayer.LoadSkeleton(pSkeleton, boneColor);
-			displayer.LoadSkeleton(pSkeleton1, boneColor1);
+			pSkeletonA->setBasePosture();
+			pSkeletonB->setBasePosture();
+			float boneColorA[3] = {1.0f, 0.5f, 1.0f};	// A-purple
+			float boneColorB[3] = {0.5f, 1.0f, 1.0f};	// B-greenblue
+			displayer.LoadSkeleton(pSkeletonA, boneColorA);
+			displayer.LoadSkeleton(pSkeletonB, boneColorB);
 			glwindow->redraw();
 		}
 	}
@@ -393,18 +395,15 @@ void load_callback(Fl_Button *button, void *) {
 			displayer.GetSkeleton(1)->SetTranslationZ(10.0);
 			displayer.GetSkeleton(1)->SetTranslationX(25.0);
 
-			// chuan
-			displayer.LoadMotion(motionA);  
-			displayer.LoadMotion(motionA);     
+			displayer.LoadMotion(motionA);	// -> Skeleton A
+			displayer.LoadMotion(motionA);	// -> Skeleton B
 
 			if (lastSkeleton > lastMotion) {
 				lastMotion++;
 			}
 
 			UpdateMaxFrameNumber();
-
-			resetPostureAccordingFrameSlider();	 // key
-
+			resetPostureAccordingFrameSlider();
 			frame_slider->value(currentFrameIndex);
 			frame_slider->maximum((double)maxFrames);
 			frame_slider->redraw(); 
@@ -416,7 +415,14 @@ void load_callback(Fl_Button *button, void *) {
 	glwindow->redraw();
 }
 
-
+double calcPosutreSimilarity(const Posture& pA, const Posture& pB) {
+	// currently use root_pos instead of angles of each bone
+	// for distance calculation
+	double dx = pA.root_pos.x() - pB.root_pos.x();
+	double dy = pA.root_pos.y() - pB.root_pos.y();
+	double dz = pA.root_pos.z() - pB.root_pos.z();
+	return dx*dx + dy*dy + dz*dz;
+}
 
 /*
 Set all skeletons to a specified frame (frameIndex). If frameIndex is larger than the number of frames of the motion, 
@@ -434,18 +440,44 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 	}
 
 	if (displayer.GetSkeletonMotion(0) != NULL && displayer.GetSkeletonMotion(1) != NULL){
-		int postureID;
+		int postureID_A;
+
+		// Get posture ID for Skeleton A
 		if (frameIndex >= displayer.GetSkeletonMotion(0)->GetNumFrames()) {
-			postureID = displayer.GetSkeletonMotion(0)->GetNumFrames() - 1;
+			postureID_A = displayer.GetSkeletonMotion(0)->GetNumFrames() - 1;
 		} else {
-			postureID = frameIndex;
+			postureID_A = frameIndex;
 		}
 
-		int postureID1 = postureID - 50;
-		if (postureID1 < 0) postureID1 = 0;
+		Posture *pA = displayer.GetSkeletonMotion(0)->GetPosture(postureID_A);
+		postureLearningBuffer_[postureLearningOffset_++] = pA;
 
-		Posture *pA = displayer.GetSkeletonMotion(0)->GetPosture(postureID);
-		Posture *pB = displayer.GetSkeletonMotion(0)->GetPosture(postureID1);
+		// calculate correspoding move indices
+		if (postureLearningOffset_ == NUM_LEARNING_STEPS) {
+			int matchedMoveIndex = 0;
+			double currentMinDistance = numeric_limits<double>::infinity();
+			for (int moveIndex = 0; moveIndex < NUM_MOVE_TYPE; moveIndex++) {
+				double distancePerType = 0.0;
+				for (int step = 0; step < NUM_LEARNING_STEPS; step++) {
+					Posture *pStandard = moves_[moveIndex]->GetPosture(step);
+					Posture *pObserved = postureLearningBuffer_[step];
+					distancePerType += calcPosutreSimilarity(*pStandard, *pObserved);
+				}
+				if (distancePerType < currentMinDistance) {
+					currentMinDistance = distancePerType;
+					matchedMoveIndex = moveIndex;
+				}
+			}
+			postureLearningOffset_ = 0;	// re-observe from offset = 0
+		}
+
+		// Get postureID for Skeleton B
+
+
+		int postureID_B = postureID_A - 50;
+		if (postureID_B < 0) postureID_B = 0;
+
+		Posture *pB = displayer.GetSkeletonMotion(0)->GetPosture(postureID_B);
 
 		displayer.GetSkeleton(0)->setPosture(*pA);
 		displayer.GetSkeleton(1)->setPosture(*pB);

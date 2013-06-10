@@ -509,7 +509,7 @@ void load_callback(Fl_Button *button, void *)
 				//if(filename != NULL && filename_prime != NULL)
 				//{
 					// Read motion (.amc) file and create a motion
-					//pSkeleton->SetRotationAngleY(180.0);
+					pSkeleton->SetRotationAngleY(180.0);
 					pSkeleton->SetTranslationZ(15.0);
 					pSkeleton->SetTranslationX(40.0);
 					//pMotion = new Motion(filename, MOCAP_SCALE, pSkeleton); //A-purple
@@ -525,7 +525,7 @@ void load_callback(Fl_Button *button, void *)
 					//displayer.LoadMotion(pMotion);  
 					// chuan
 					displayer.LoadMotion(motionA);  
-					displayer.LoadMotion(pMotion1);     
+					displayer.LoadMotion(motionA);     
 
 					if (lastSkeleton > lastMotion)         
 						lastMotion++;
@@ -534,7 +534,7 @@ void load_callback(Fl_Button *button, void *)
 					resetPostureAccordingFrameSlider();
 					frame_slider->value(currentFrameIndex);
 					frame_slider->maximum((double)maxFrames);
-					frame_slider->redraw();
+					frame_slider->redraw(); 
 					glwindow->redraw();
 					Fl::flush();
 				//}
@@ -542,62 +542,62 @@ void load_callback(Fl_Button *button, void *)
 		}
 		glwindow->redraw();
 }
-void load_auto(){
-	if (lastSkeleton <= lastMotion)  // cannot load new skeleton until motion is assigned to the current skeleton
-	{
-		char * asfFilename = "C:\\Users\\Yang\\Desktop\\mocap\\mocapPlayer_source_1\\IDE\\VS2010\\mocapPlayer\\131-dance.asf";
-		// Read skeleton from asf file
-		pSkeleton = new Skeleton(asfFilename, MOCAP_SCALE);
-		pSkeleton1 = new Skeleton(asfFilename, MOCAP_SCALE);
-		lastSkeleton++;
-		// Set the rotations for all bones in their local coordinate system to 0
-		// Set root position to (0, 0, 0)
-		pSkeleton->setBasePosture();
-		pSkeleton1->setBasePosture();
-		float boneColor[3] = {1.0f, 0.5f, 1.0f};
-		float boneColor1[3] = {0.5f, 1.0f, 1.0f};
-		displayer.LoadSkeleton(pSkeleton, boneColor);
-		displayer.LoadSkeleton(pSkeleton1, boneColor1);
-		//glwindow->redraw();
-	}
-
-	if ((lastSkeleton >= 0) && (lastSkeleton >= lastMotion))
-	{
-		char * amcFilename = "C:\\Users\\Yang\\Desktop\\mocap\\mocapPlayer_source_1\\IDE\\VS2010\\mocapPlayer\\20_01_A.amc";
-		if(amcFilename != NULL)
-		{
-			// Read motion (.amc) file and create a motion
-			pSkeleton->SetRotationAngleY(180.0);
-			pSkeleton->SetTranslationZ(-20.0);
-			pMotion = new Motion(amcFilename, MOCAP_SCALE, pSkeleton);
-
-			pSkeleton1->SetTranslationZ(20.0);
-			pSkeleton1->SetTranslationX(-10.0);
-			pMotion1 = new Motion(amcFilename, MOCAP_SCALE, pSkeleton1);
-
-
-			// backup the filename
-			strcpy(lastMotionFilename, amcFilename);
-
-			// set sampled motion for display
-			displayer.LoadMotion(pMotion);  
-			displayer.LoadMotion(pMotion);      
-
-			if (lastSkeleton > lastMotion)         
-				lastMotion++;
-
-			UpdateMaxFrameNumber();
-			//resetPostureAccordingFrameSlider();
-			//frame_slider->value(currentFrameIndex);
-			//frame_slider->maximum((double)maxFrames);
-			//frame_slider->redraw();
-			//glwindow->redraw();
-			//Fl::flush();
-		}
-	} // if (lastSkeleton > lastMotion)
-
-	//glwindow->redraw();
-}
+//void load_auto(){
+//	if (lastSkeleton <= lastMotion)  // cannot load new skeleton until motion is assigned to the current skeleton
+//	{
+//		char * asfFilename = "C:\\Users\\Yang\\Desktop\\mocap\\mocapPlayer_source_1\\IDE\\VS2010\\mocapPlayer\\131-dance.asf";
+//		// Read skeleton from asf file
+//		pSkeleton = new Skeleton(asfFilename, MOCAP_SCALE);
+//		pSkeleton1 = new Skeleton(asfFilename, MOCAP_SCALE);
+//		lastSkeleton++;
+//		// Set the rotations for all bones in their local coordinate system to 0
+//		// Set root position to (0, 0, 0)
+//		pSkeleton->setBasePosture();
+//		pSkeleton1->setBasePosture();
+//		float boneColor[3] = {1.0f, 0.5f, 1.0f};
+//		float boneColor1[3] = {0.5f, 1.0f, 1.0f};
+//		displayer.LoadSkeleton(pSkeleton, boneColor);
+//		displayer.LoadSkeleton(pSkeleton1, boneColor1);
+//		//glwindow->redraw();
+//	}
+//
+//	if ((lastSkeleton >= 0) && (lastSkeleton >= lastMotion))
+//	{
+//		char * amcFilename = "C:\\Users\\Yang\\Desktop\\mocap\\mocapPlayer_source_1\\IDE\\VS2010\\mocapPlayer\\20_01_A.amc";
+//		if(amcFilename != NULL)
+//		{
+//			// Read motion (.amc) file and create a motion
+//			pSkeleton->SetRotationAngleY(180.0);
+//			pSkeleton->SetTranslationZ(-20.0);
+//			pMotion = new Motion(amcFilename, MOCAP_SCALE, pSkeleton);
+//
+//			pSkeleton1->SetTranslationZ(20.0);
+//			pSkeleton1->SetTranslationX(-10.0);
+//			pMotion1 = new Motion(amcFilename, MOCAP_SCALE, pSkeleton1);
+//
+//
+//			// backup the filename
+//			strcpy(lastMotionFilename, amcFilename);
+//
+//			// set sampled motion for display
+//			displayer.LoadMotion(pMotion);  
+//			displayer.LoadMotion(pMotion);      
+//
+//			if (lastSkeleton > lastMotion)         
+//				lastMotion++;
+//
+//			UpdateMaxFrameNumber();
+//			//resetPostureAccordingFrameSlider();
+//			//frame_slider->value(currentFrameIndex);
+//			//frame_slider->maximum((double)maxFrames);
+//			//frame_slider->redraw();
+//			//glwindow->redraw();
+//			//Fl::flush();
+//		}
+//	} // if (lastSkeleton > lastMotion)
+//
+//	//glwindow->redraw();
+//}
 
 
 void reload_callback(Fl_Button *button, void *) 
@@ -651,65 +651,34 @@ void record_callback(Fl_Light_Button * button, void * )
 Set all skeletons to a specified frame (frameIndex). If frameIndex is larger than the number of frames of the motion, 
 set the skeleton to the last frame of the motion. xmm
 */
-void SetSkeletonsToSpecifiedFrame(int frameIndex)
-{
-	if (frameIndex < 0)
-	{
+void SetSkeletonsToSpecifiedFrame(int frameIndex) {
+	if (frameIndex < 0) {
 		printf("Error in SetSkeletonsToSpecifiedFrame: frameIndex %d is illegal.\n", frameIndex);
 		exit(0);
 	}
-	
-	/*for (int skeletonIndex = 0; skeletonIndex < displayer.GetNumSkeletons(); skeletonIndex++){
 
-		if (displayer.GetSkeletonMotion(skeletonIndex) != NULL
-			&& displayer1.GetSkeletonMotion(skeletonIndex) != NULL)
-		{
-			int postureID;
-			if (frameIndex >= displayer.GetSkeletonMotion(skeletonIndex)->GetNumFrames())
-				postureID = displayer.GetSkeletonMotion(skeletonIndex)->GetNumFrames() - 1;
-			else 
-				postureID = frameIndex;
-			int postureID1 = postureID - 50;
-			if (postureID1 < 0) postureID1 = 0;
-			displayer1.GetSkeleton(skeletonIndex)->setPosture(
-			*(displayer.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID1)));
-
-			displayer.GetSkeleton(skeletonIndex)->setPosture(
-				*(displayer.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID)));
-		}
-	}*/
-
-	if (displayer.GetNumSkeletons() != 2){
+	if (displayer.GetNumSkeletons() != 2) {
 		printf("Skeleton number not match");
 		exit(0);
 	}
-	if ( displayer.GetSkeletonMotion(0) != NULL &&
-		displayer.GetSkeletonMotion(1) != NULL){
 
+	if (displayer.GetSkeletonMotion(0) != NULL && displayer.GetSkeletonMotion(1) != NULL){
 			int postureID;
-			if (frameIndex >= displayer.GetSkeletonMotion(0)->GetNumFrames())
+			if (frameIndex >= displayer.GetSkeletonMotion(0)->GetNumFrames()) {
 				postureID = displayer.GetSkeletonMotion(0)->GetNumFrames() - 1;
-			else 
+			} else {
 				postureID = frameIndex;
+			}
+
 			int postureID1 = postureID - 50;
 			if (postureID1 < 0) postureID1 = 0;
-			displayer.GetSkeleton(1)->setPosture(
-				*(displayer.GetSkeletonMotion(0)->GetPosture(postureID1)));
 
-			displayer.GetSkeleton(0)->setPosture(
-				*(displayer.GetSkeletonMotion(0)->GetPosture(postureID)));
+			Posture *pA = displayer.GetSkeletonMotion(0)->GetPosture(postureID);
+			Posture *pB = displayer.GetSkeletonMotion(0)->GetPosture(postureID1);
+
+			displayer.GetSkeleton(0)->setPosture(*pA);
+			displayer.GetSkeleton(1)->setPosture(*pB);
 	}
-		/*for (int skeletonIndex = 0; skeletonIndex < displayer1.GetNumSkeletons(); skeletonIndex++)
-			if (displayer1.GetSkeletonMotion(skeletonIndex) != NULL)
-			{
-				int postureID;
-				if (frameIndex >= displayer1.GetSkeletonMotion(skeletonIndex)->GetNumFrames())
-					postureID = displayer1.GetSkeletonMotion(skeletonIndex)->GetNumFrames() - 1;
-				else 
-					postureID = frameIndex;
-				displayer1.GetSkeleton(skeletonIndex)->setPosture(
-					*(displayer1.GetSkeletonMotion(skeletonIndex)->GetPosture(postureID)));
-			}*/
 }
 
 // Write a screen-shot, in the PPM format, to the specified filename, in PPM format

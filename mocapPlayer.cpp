@@ -39,11 +39,6 @@ enum SwitchStatus {OFF, ON};
 
 DisplaySkeleton displayer;		
 
-//Skeleton *pSkeleton = NULL;	// Skeleton info as read from ASF file
-//Skeleton *pSkeleton1 = NULL;	// Skeleton info as read from ASF file
-Motion *pMotion = NULL;     // Motion information as read from AMC file
-Motion *pMotion1 = NULL;     // Motion information as read from AMC file
-
 Fl_Window *form = NULL; // Global form 
 MouseT mouse;    // Keeping track of mouse input 
 CameraT camera;  // Structure about camera setting 
@@ -376,7 +371,6 @@ void load_callback(Fl_Button *button, void *) {
 		Skeleton *pSkeleton = displayer.GetSkeleton(0);
 
 		if (lastSkeleton >= 0 && lastSkeleton >= lastMotion) {
-			//char * filename = fl_file_chooser("Select one filename","*.AMC","");
 			string path = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\A_";
 			string ext	= ".amc";
 			Posture *prePost[NUM_MOVES], *postPost[NUM_MOVES];

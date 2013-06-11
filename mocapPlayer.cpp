@@ -60,7 +60,7 @@ char lastMotionFilename[FILENAME_MAX];
 
 const int NUM_MOVE_TYPE = 4; // four kinds of moves_: beak(0), wing(1), tail feather(2), claps(3)
 const int NUM_MOVE_SEQ = 16; // length of motion = 16 moves
-const int NUM_LEARNING_STEPS = 2;
+const int NUM_LEARNING_STEPS = 3;
 const int NUM_MEANINGFUL_BONES = 32;
 Motion *moves_[NUM_MOVE_TYPE];
 
@@ -403,10 +403,10 @@ void load_callback(Fl_Button *button, void *) {
 
 			// Skeleton A, turn around, face to Skeleton B
 			displayer.GetSkeleton(0)->SetRotationAngleY(180.0);
-			displayer.GetSkeleton(0)->SetTranslationZ(15.0);
+			displayer.GetSkeleton(0)->SetTranslationZ(5.0);
 			displayer.GetSkeleton(0)->SetTranslationX(40.0);
 
-			displayer.GetSkeleton(1)->SetTranslationZ(10.0);
+			displayer.GetSkeleton(1)->SetTranslationZ(20.0);
 			displayer.GetSkeleton(1)->SetTranslationX(25.0);
 
 			displayer.LoadMotion(motionA);	// -> Skeleton A
@@ -1045,26 +1045,8 @@ void Player_Gl_Window::draw() {
 
 int main(int argc, char **argv)  {
 	for (int i = 0; i < NUM_MOVE_SEQ; i++) {
-		//moveIndexSequence_[i] = rand() % NUM_MOVE_TYPE;
+		moveIndexSequence_[i] = rand() % NUM_MOVE_TYPE;
 	}
-
-	moveIndexSequence_[0] = 0;
-	moveIndexSequence_[1] = 0;
-	moveIndexSequence_[2] = 0;
-	moveIndexSequence_[3] = 0;
-	moveIndexSequence_[4] = 1;
-	moveIndexSequence_[5] = 1;
-	moveIndexSequence_[6] = 1;
-	moveIndexSequence_[7] = 1;
-	moveIndexSequence_[8] = 2;
-	moveIndexSequence_[9] = 2;
-	moveIndexSequence_[10] = 2;
-	moveIndexSequence_[11] = 2;
-	moveIndexSequence_[12] = 3;
-	moveIndexSequence_[13] = 3;
-	moveIndexSequence_[14] = 3;
-	moveIndexSequence_[15] = 3;
-
 
 	// Initialize form, sliders and buttons
 	form = make_window();

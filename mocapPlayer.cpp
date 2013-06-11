@@ -16,6 +16,7 @@ Revision 4 - Chuan Wang (UCD), Jun, 2013
 #include <fstream>
 #include <cassert>
 #include <cmath>
+#include <ctime>
 
 #include <FL/gl.h>
 #include <FL/glut.H>  // GLUT for use with FLTK
@@ -1044,6 +1045,7 @@ void Player_Gl_Window::draw() {
 }
 
 int main(int argc, char **argv)  {
+	srand((unsigned int)time(0));
 	for (int i = 0; i < NUM_MOVE_SEQ; i++) {
 		moveIndexSequence_[i] = rand() % NUM_MOVE_TYPE;
 	}

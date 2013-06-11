@@ -457,8 +457,8 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 	//int moveIndex = -1;
 	for (int i = 0; i < NUM_MOVE_SEQ; i++) {
 		if (frameIndex < moveCheckpointIdx_[i]) {
-			postureSampledFrames_[postureSampledOffset_++] = frameIndex - moveCheckpointIdx_[i-1];
-			//moveIndex = moveIndexSequence_[i];
+			postureID_B = frameIndex - moveCheckpointIdx_[i-1];
+			postureSampledFrames_[postureSampledOffset_++] = postureID_B;
 			break;
 		}
 	}
@@ -478,8 +478,6 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 		// 1. observe skeleton A and learn its moves
 		postureLearningBuffer_[postureLearningOffset_++] = pA;
 
-		cout << postureSampledOffset_ << " = " << postureLearningOffset_ << endl;
-
 		// 2. calculate similarity every NUM_LEARNING_STEPS steps
 		if (postureLearningOffset_ == NUM_LEARNING_STEPS) {
 			double currentMinDistance = numeric_limits<double>::infinity();
@@ -488,7 +486,7 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 				for (int i = 0; i < NUM_LEARNING_STEPS; i++) {
 					int numFrame = moves_[moveIndex]->GetNumFrames();
 					int sampledFrame = postureSampledFrames_[i];
-					if (sampledFrame > numFrame) {
+					if (sampledFrame >= numFrame) {
 						continue;	// not standard posture from move
 					}
 					Posture *pStandard = moves_[moveIndex]->GetPosture(sampledFrame);
@@ -500,14 +498,17 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 					matchedMoveIndex = moveIndex;
 				}
 			}
-			checkpoint = postureID_A - postureSampledFrames_[postureSampledOffset_-1];
+
+
 			postureLearningOffset_ = 0;	// re-observe from offset = 0
 			postureSampledOffset_ = 0;
 			// checkpoint = postureID_A - NUM_LEARNING_STEPS;	// start index of a move
 			// postureID_B = NUM_LEARNING_STEPS;	// skeleton B moves from current step
 		}
 
-		postureID_B = postureID_A - checkpoint;
+
+
+		//postureID_B = postureID_A - checkpoint;
 		
 		Posture *pB;
 		if (postureID_B < moves_[matchedMoveIndex]->GetNumFrames()) {

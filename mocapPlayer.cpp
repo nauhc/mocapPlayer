@@ -317,7 +317,7 @@ void load_callback(Fl_Button *button, void *) {
 	if (button == loadSkeleton_button) {
 		// cannot load new skeleton until motion is assigned to the current skeleton
 		if (lastSkeleton <= lastMotion) { 
-			char *filename = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\dance.asf";
+			char *filename = "Data\\dance.asf";
 			// Read skeleton from asf file
 			Skeleton *pSkeletonA = new Skeleton(filename, MOCAP_SCALE);
 			Skeleton *pSkeletonB = new Skeleton(filename, MOCAP_SCALE);
@@ -348,7 +348,7 @@ void load_callback(Fl_Button *button, void *) {
 
 			for (int i = 0; i < NUM_MOVE_TYPE; i++) {
 				// get four move motions from input files
-				string path = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\A_";
+				string path = "Data\\A_";
 				string ext	= ".amc";
 				string fullpath = path + to_string(i) + ext;
 				char *filename = new char[fullpath.length()+1];
@@ -373,7 +373,7 @@ void load_callback(Fl_Button *button, void *) {
 			Motion *motionA = new Motion(numFrames, templateSkeleton);  // smoothed
 
 			// load midPost for smoothing
-			char *filename_m = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\posture.amc";
+			char *filename_m = "Data\\posture.amc";
 			Motion *midMotion = new Motion(filename_m, MOCAP_SCALE, templateSkeleton);
 			Posture midPost = *(midMotion->GetPosture(0));
 

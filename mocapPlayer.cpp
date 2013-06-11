@@ -60,15 +60,21 @@ char lastMotionFilename[FILENAME_MAX];
 
 const int NUM_MOVE_TYPE = 4; // four kinds of moves_: beak(0), wing(1), tail feather(2), claps(3)
 const int NUM_MOVE_SEQ = 16; // length of motion = 16 moves
-const int NUM_LEARNING_STEPS = 10;
+const int NUM_LEARNING_STEPS = 2;
 const int NUM_MEANINGFUL_BONES = 32;
 Motion *moves_[NUM_MOVE_TYPE];
+
 Posture *postureLearningBuffer_[NUM_LEARNING_STEPS];
 int postureLearningOffset_ = 0;
+
+int postureSampledFrames_[NUM_LEARNING_STEPS];
+int postureSampledOffset_ = 0;
+
 int postureID_B = 0;
 int matchedMoveIndex = 0;
-
-int moveIndexSequence[NUM_MOVE_SEQ] = {};
+int checkpoint = 0;
+int moveIndexSequence_[NUM_MOVE_SEQ];
+int moveCheckpointIdx_[NUM_MOVE_SEQ];
 
 //int numFrames[NUM_MOVE_TYPE];
 const int transFrameNum = 61;
@@ -357,35 +363,42 @@ void load_callback(Fl_Button *button, void *) {
 			// total input motion frame number
 			int numFrames = 0;
 			for (int i = 0; i < NUM_MOVE_SEQ; i++) {
-				numFrames += moves_[moveIndexSequence[i]]->GetNumFrames();
+				numFrames += moves_[moveIndexSequence_[i]]->GetNumFrames();
 			}
 			numFrames += (NUM_MOVE_SEQ - 1) * transFrameNum;
 
 			// create input motion
-			Motion *motionA = new Motion(numFrames, templateSkeleton);  // smoothed
-			Motion *motionTmp = new Motion(transFrameNum, templateSkeleton);
 			Motion *motionSeq[NUM_MOVE_SEQ];
+			Motion *motionTransit = new Motion(transFrameNum, templateSkeleton);
+			Motion *motionA = new Motion(numFrames, templateSkeleton);  // smoothed
 
 			// load midPost for smoothing
 			char *filename_m = "C:\\Users\\Yang\\Desktop\\chiken_dance_mocap\\posture.amc";
 			Motion *midMotion = new Motion(filename_m, MOCAP_SCALE, templateSkeleton);
 			Posture midPost = *(midMotion->GetPosture(0));
 
+			moveCheckpointIdx_[0] = 0;
+
 			int index = 0;
 			for (int i = 0; i < NUM_MOVE_SEQ; i++) {
-				motionSeq[i] = moves_[moveIndexSequence[i]];
-				for (int j = 0; j < moves_[moveIndexSequence[i]]->GetNumFrames(); j++) {
+				motionSeq[i] = moves_[moveIndexSequence_[i]];
+				for (int j = 0; j < moves_[moveIndexSequence_[i]]->GetNumFrames(); j++) {
 					motionA->SetPosture(index++, *(motionSeq[i]->GetPosture(j)));
 				}
 				if (i == NUM_MOVE_SEQ - 1) {
 					continue;
 				} else {
-					motionTmp = posture_transition(*(postPost[moveIndexSequence[i]]), 
-						*(prePost[moveIndexSequence[i+1]]), midPost, templateSkeleton);
+					motionTransit = posture_transition(*(postPost[moveIndexSequence_[i]]), 
+						*(prePost[moveIndexSequence_[i+1]]), midPost, templateSkeleton);
 					for (int j = 0; j < transFrameNum; j++) { 
-						motionA->SetPosture(index++,*( motionTmp->GetPosture(j)));
+						motionA->SetPosture(index++, *(motionTransit->GetPosture(j)));
 					}
 				}
+				moveCheckpointIdx_[i+1] = index;
+			}
+
+			for (int i = 0; i < NUM_MOVE_SEQ; i++) {
+				printf("%d\n", moveCheckpointIdx_[i]);
 			}
 
 			// Skeleton A, turn around, face to Skeleton B
@@ -440,8 +453,17 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 		exit(0);
 	}
 
-	if (displayer.GetSkeletonMotion(0) != NULL && displayer.GetSkeletonMotion(1) != NULL){
-		
+	//int offset = -1;
+	//int moveIndex = -1;
+	for (int i = 0; i < NUM_MOVE_SEQ; i++) {
+		if (frameIndex < moveCheckpointIdx_[i]) {
+			postureSampledFrames_[postureSampledOffset_++] = frameIndex - moveCheckpointIdx_[i-1];
+			//moveIndex = moveIndexSequence_[i];
+			break;
+		}
+	}
+
+	if (displayer.GetSkeletonMotion(0) != NULL && displayer.GetSkeletonMotion(1) != NULL) {
 		// Get posture ID for Skeleton A
 		int postureID_A = 0;
 		if (frameIndex >= displayer.GetSkeletonMotion(0)->GetNumFrames()) {
@@ -450,21 +472,27 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 			postureID_A = frameIndex;
 		}
 		Posture *pA = displayer.GetSkeletonMotion(0)->GetPosture(postureID_A);
-		
+		displayer.GetSkeleton(0)->setPosture(*pA);
 		
 		// Get postureID for Skeleton B
 		// 1. observe skeleton A and learn its moves
 		postureLearningBuffer_[postureLearningOffset_++] = pA;
 
+		cout << postureSampledOffset_ << " = " << postureLearningOffset_ << endl;
+
 		// 2. calculate similarity every NUM_LEARNING_STEPS steps
-		//printf("%d\n", postureID_B);
 		if (postureLearningOffset_ == NUM_LEARNING_STEPS) {
 			double currentMinDistance = numeric_limits<double>::infinity();
 			for (int moveIndex = 0; moveIndex < NUM_MOVE_TYPE; moveIndex++) {
 				double distancePerType = 0.0;
-				for (int step = 0; step < NUM_LEARNING_STEPS; step++) {
-					Posture *pStandard = moves_[moveIndex]->GetPosture(step);
-					Posture *pObserved = postureLearningBuffer_[step];
+				for (int i = 0; i < NUM_LEARNING_STEPS; i++) {
+					int numFrame = moves_[moveIndex]->GetNumFrames();
+					int sampledFrame = postureSampledFrames_[i];
+					if (sampledFrame > numFrame) {
+						continue;	// not standard posture from move
+					}
+					Posture *pStandard = moves_[moveIndex]->GetPosture(sampledFrame);
+					Posture *pObserved = postureLearningBuffer_[i];
 					distancePerType += calcPosutreSimilarity(*pStandard, *pObserved);
 				}
 				if (distancePerType < currentMinDistance) {
@@ -472,22 +500,39 @@ void SetSkeletonsToSpecifiedFrame(int frameIndex) {
 					matchedMoveIndex = moveIndex;
 				}
 			}
+			checkpoint = postureID_A - postureSampledFrames_[postureSampledOffset_-1];
 			postureLearningOffset_ = 0;	// re-observe from offset = 0
-			postureID_B = NUM_LEARNING_STEPS;	// skeleton B moves from current step
+			postureSampledOffset_ = 0;
+			// checkpoint = postureID_A - NUM_LEARNING_STEPS;	// start index of a move
+			// postureID_B = NUM_LEARNING_STEPS;	// skeleton B moves from current step
 		}
 
-		printf("%d\n", matchedMoveIndex);
+		postureID_B = postureID_A - checkpoint;
+		
+		Posture *pB;
+		if (postureID_B < moves_[matchedMoveIndex]->GetNumFrames()) {
+			pB = moves_[matchedMoveIndex]->GetPosture(postureID_B);
+			//postureLearningOffset_++;
+		} else {
+			pB = pA;
+			if (postureID_B == moves_[matchedMoveIndex]->GetNumFrames() + transFrameNum) {
+				postureID_B = 0;
+				postureLearningOffset_ = 0;	// re-observe from offset = 0
+			}
+		}
 
 		// 3. once matched move is obtained, get corresponding posture
-		Posture *pB = moves_[matchedMoveIndex]->GetPosture(postureID_B++);
+		//Posture *pB = moves_[matchedMoveIndex]->GetPosture(postureID_B);
 
 		// 4. once finished one move, wait for next learnt move
-		if (postureID_B++ == moves_[matchedMoveIndex]->GetNumFrames()) {
-			postureID_B = 0;	// finished one move, wait for next learnt move
-		}
+		//if (postureID_B == moves_[matchedMoveIndex]->GetNumFrames()) {
+		//	postureID_B = 0;	// finished one move, wait for next learnt move
+		//}
+
+		printf("%d: %d (%d)\n", matchedMoveIndex, postureID_B, postureLearningOffset_);
 
 		// 5. set posture for A and B to displayer
-		displayer.GetSkeleton(0)->setPosture(*pA);
+		
 		displayer.GetSkeleton(1)->setPosture(*pB);
 	}
 }
@@ -999,8 +1044,26 @@ void Player_Gl_Window::draw() {
 
 int main(int argc, char **argv)  {
 	for (int i = 0; i < NUM_MOVE_SEQ; i++) {
-		moveIndexSequence[i] = rand() % NUM_MOVE_TYPE;
+		//moveIndexSequence_[i] = rand() % NUM_MOVE_TYPE;
 	}
+
+	moveIndexSequence_[0] = 0;
+	moveIndexSequence_[1] = 0;
+	moveIndexSequence_[2] = 0;
+	moveIndexSequence_[3] = 0;
+	moveIndexSequence_[4] = 1;
+	moveIndexSequence_[5] = 1;
+	moveIndexSequence_[6] = 1;
+	moveIndexSequence_[7] = 1;
+	moveIndexSequence_[8] = 2;
+	moveIndexSequence_[9] = 2;
+	moveIndexSequence_[10] = 2;
+	moveIndexSequence_[11] = 2;
+	moveIndexSequence_[12] = 3;
+	moveIndexSequence_[13] = 3;
+	moveIndexSequence_[14] = 3;
+	moveIndexSequence_[15] = 3;
+
 
 	// Initialize form, sliders and buttons
 	form = make_window();
